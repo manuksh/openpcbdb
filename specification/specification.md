@@ -58,8 +58,8 @@
       - 4.9.2 [Violation Reporting](#492-violation-reporting)
 5. [API Specification](#5-api-specification)
 6. [File Format](#6-file-format)
-   - 6.1 JSON Format
-   - 6.2 Directory Structure for Large Projects
+   - 6.1 [JSON Format](#61-json-format-primary)
+   - 6.2 [Directory Structure for Large Projects](#62-directory-structure-for-large-projects)
    - 6.3 [Compression and Storage Optimization](#63-compression-and-storage-optimization)
 7. [AI/ML Integration](#7-aiml-integration)
 8. [Reference Implementation](#8-reference-implementation)
