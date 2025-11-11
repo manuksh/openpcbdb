@@ -3,7 +3,7 @@
 ---
 
 **Status:** Draft  
-**Version:** 1.2.0  
+**Version:** 1.3.0  
 **Date:** 2025-11-11  
 **Authors:** Manuk Shemsyan
 **Company:** Mintaka LLC, Armenia, www.mintaka-ai.com  
@@ -28,7 +28,7 @@
       - 4.2.4 [FunctionalBlock](#424-functionalblock)
       - 4.2.5 [Module](#425-module)
    - 4.3 [Constraint Model](#43-constraint-model)
-   - 4.4 [User Library Integration](#44-user-library-integration) **NEW**
+   - 4.4 [User Library Integration](#44-user-library-integration)
       - 4.4.1 [Library Configuration](#441-library-configuration)
       - 4.4.2 [SQL Database Schema](#442-sql-database-library-schema)
       - 4.4.3 [SQLite Schema](#443-sqlite-library-schema)
@@ -37,6 +37,25 @@
       - 4.4.6 [Library Synchronization](#446-library-synchronization)
       - 4.4.7 [Query Examples](#447-query-examples)
       - 4.4.8 [Library Best Practices](#448-library-best-practices)
+   - 4.5 [Physical Routing Model](#45-physical-routing-model) **NEW**
+      - 4.5.1 [Trace Geometry](#451-trace-geometry)
+      - 4.5.2 [Via Definitions](#452-via-definitions)
+      - 4.5.3 [Copper Polygons](#453-copper-polygons)
+   - 4.6 [Manufacturing Layers](#46-manufacturing-layers) **NEW**
+      - 4.6.1 [Pad Geometries](#461-pad-geometries)
+      - 4.6.2 [Silkscreen Graphics](#462-silkscreen-graphics)
+      - 4.6.3 [Solder Mask](#463-solder-mask)
+      - 4.6.4 [Solder Paste](#464-solder-paste)
+   - 4.7 [Manufacturing Data](#47-manufacturing-data) **NEW**
+      - 4.7.1 [Gerber Files](#471-gerber-files)
+      - 4.7.2 [Drill Files](#472-drill-files)
+      - 4.7.3 [Assembly Data](#473-assembly-data)
+   - 4.8 [3D Mechanical Integration](#48-3d-mechanical-integration) **NEW**
+      - 4.8.1 [Component Models](#481-component-models)
+      - 4.8.2 [Keepout Zones](#482-keepout-zones)
+   - 4.9 [Design Rule Checking](#49-design-rule-checking) **NEW**
+      - 4.9.1 [Rule Definitions](#491-rule-definitions)
+      - 4.9.2 [Violation Reporting](#492-violation-reporting)
 5. [API Specification](#5-api-specification)
 6. [File Format](#6-file-format)
    - 6.1 JSON Format
@@ -2260,6 +2279,791 @@ company_library/
 }
 ```
 
+### 4.5 Physical Routing Model
+
+OpenPCBDB v1.3.0 adds comprehensive physical implementation details for complete PCB manufacturing support. These sections capture actual trace geometry, via positions, and copper polygons required for fabrication.
+
+#### 4.5.1 Trace Geometry
+
+Trace routing defines the exact physical paths of copper traces connecting component pads.
+
+**Schema:**
+
+```json
+{
+  "routing": {
+    "traces": [
+      {
+        "id": "trace_001",
+        "net": "net_vcc_5v",
+        "layer": "top",
+        "width": 0.5,
+        "unit": "mm",
+        
+        "segments": [
+          {
+            "type": "line",
+            "start": {"x": 10.5, "y": 20.3},
+            "end": {"x": 15.8, "y": 20.3}
+          },
+          {
+            "type": "arc",
+            "center": {"x": 15.8, "y": 22.3},
+            "radius": 2.0,
+            "startAngle": 270,
+            "endAngle": 0,
+            "unit": "degrees"
+          },
+          {
+            "type": "line",
+            "start": {"x": 17.8, "y": 22.3},
+            "end": {"x": 25.0, "y": 22.3}
+          }
+        ],
+        
+        "connections": [
+          {"component": "U1", "pin": "8", "position": {"x": 10.5, "y": 20.3}},
+          {"component": "R1", "pin": "1", "position": {"x": 25.0, "y": 22.3}}
+        ],
+        
+        "properties": {
+          "impedance": {"target": 50, "actual": 51.2, "unit": "ohm"},
+          "length": {"value": 18.5, "unit": "mm"},
+          "netClass": "power",
+          "keepout": false
+        },
+        
+        "semantic": {
+          "purpose": "5V power trace from regulator to MCU",
+          "critical": true,
+          "reasoning": "Wide trace (0.5mm) for 500mA current capacity",
+          "routingStrategy": "Manual routing for power integrity"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Segment Types:**
+
+| Type | Parameters | Description |
+|------|------------|-------------|
+| `line` | start, end | Straight trace segment |
+| `arc` | center, radius, startAngle, endAngle | Curved segment for corners/teardrops |
+| `bezier` | start, end, control1, control2 | Smooth curve using Bezier |
+
+#### 4.5.2 Via Definitions
+
+Vias provide electrical connections between PCB layers with exact positions and drill specifications.
+
+**Schema:**
+
+```json
+{
+  "vias": [
+    {
+      "id": "via_001",
+      "position": {"x": 15.5, "y": 20.3, "unit": "mm"},
+      "net": "net_vcc_5v",
+      
+      "type": "through_hole",
+      
+      "drill": {
+        "diameter": 0.3,
+        "tolerance": 0.05,
+        "unit": "mm",
+        "plated": true
+      },
+      
+      "pad": {
+        "diameter": 0.6,
+        "shape": "circle",
+        "unit": "mm"
+      },
+      
+      "layers": {
+        "start": "top",
+        "end": "bottom",
+        "connections": ["L1", "L2"]
+      },
+      
+      "annularRing": {
+        "minimum": 0.15,
+        "actual": 0.15,
+        "unit": "mm"
+      },
+      
+      "properties": {
+        "tented": false,
+        "thermal": true,
+        "stitching": false,
+        "testPoint": false
+      },
+      
+      "semantic": {
+        "purpose": "Layer transition for power net",
+        "critical": true,
+        "reasoning": "Required for power plane connection"
+      }
+    }
+  ]
+}
+```
+
+**Via Types:**
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| `through_hole` | Connects all layers | Standard via |
+| `blind` | Outer to inner layer only | High-density routing |
+| `buried` | Internal layers only | Advanced HDI |
+| `micro` | Laser-drilled (<0.15mm) | Fine-pitch BGA |
+
+#### 4.5.3 Copper Polygons
+
+Copper polygons (pour zones) provide large copper areas for power/ground planes with automatic clearances and thermal reliefs.
+
+**Schema:**
+
+```json
+{
+  "planes": [
+    {
+      "id": "plane_gnd_bottom",
+      "net": "GND",
+      "layer": "bottom",
+      "type": "solid_pour",
+      
+      "outline": [
+        {"x": 0.5, "y": 0.5},
+        {"x": 79.5, "y": 0.5},
+        {"x": 79.5, "y": 49.5},
+        {"x": 0.5, "y": 49.5}
+      ],
+      "unit": "mm",
+      "closed": true,
+      
+      "islands": [
+        {
+          "outline": [
+            {"x": 10, "y": 10},
+            {"x": 20, "y": 10},
+            {"x": 20, "y": 20},
+            {"x": 10, "y": 20}
+          ],
+          "reason": "Keepout for mounting hole"
+        }
+      ],
+      
+      "thermalRelief": {
+        "enabled": true,
+        "connectionWidth": 0.3,
+        "connectionCount": 4,
+        "gap": 0.3,
+        "unit": "mm",
+        "applyTo": "all_pads"
+      },
+      
+      "clearance": {
+        "default": 0.3,
+        "power": 0.5,
+        "signal": 0.25,
+        "unit": "mm"
+      },
+      
+      "hatch": {
+        "enabled": false,
+        "width": 0.5,
+        "spacing": 2.0,
+        "angle": 45,
+        "unit": "mm"
+      },
+      
+      "priority": 1,
+      
+      "properties": {
+        "locked": false,
+        "keepout": false,
+        "minArea": 1.0
+      },
+      
+      "semantic": {
+        "purpose": "Primary ground plane for bottom layer",
+        "critical": true,
+        "reasoning": "Solid plane provides low impedance ground return path",
+        "designPattern": "ground_plane"
+      }
+    }
+  ]
+}
+```
+
+### 4.6 Manufacturing Layers
+
+Manufacturing layer definitions specify pad geometries, silkscreen graphics, and solder mask/paste openings required for PCB fabrication and assembly.
+
+#### 4.6.1 Pad Geometries
+
+Pad definitions specify exact shapes and properties for each component connection point.
+
+**Schema:**
+
+```json
+{
+  "componentPlacement": [
+    {
+      "refDesignator": "R1",
+      "position": {"x": 25.0, "y": 30.0, "unit": "mm"},
+      "rotation": 0,
+      "side": "top",
+      
+      "pads": [
+        {
+          "id": "1",
+          "number": "1",
+          "position": {"x": 0, "y": 0, "unit": "mm"},
+          
+          "shape": "rectangle",
+          "size": {
+            "width": 0.6,
+            "height": 0.8,
+            "unit": "mm"
+          },
+          
+          "layers": ["top_copper", "top_mask", "top_paste"],
+          
+          "hole": null,
+          
+          "soldermask": {
+            "expansion": 0.05,
+            "unit": "mm",
+            "defined": true
+          },
+          
+          "solderpaste": {
+            "reduction": 0.05,
+            "unit": "mm",
+            "defined": true
+          },
+          
+          "properties": {
+            "net": "net_vcc_5v",
+            "thermal": false,
+            "testPoint": false,
+            "plated": true
+          },
+          
+          "semantic": {
+            "function": "Component terminal for voltage input",
+            "critical": false
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Pad Shapes:**
+
+| Shape | Use Case | Parameters |
+|-------|----------|------------|
+| `rectangle` | Standard SMD | width, height |
+| `circle` | Round pads, THT | diameter |
+| `oval` | Elongated pads | width, height |
+| `rounded_rect` | Rounded corners | width, height, radius |
+| `custom` | Complex shapes | polygon points |
+
+#### 4.6.2 Silkscreen Graphics
+
+Silkscreen layer defines component designators, values, and board markings.
+
+**Schema:**
+
+```json
+{
+  "silkscreen": {
+    "layers": ["top_silkscreen", "bottom_silkscreen"],
+    
+    "text": [
+      {
+        "id": "text_001",
+        "content": "R1",
+        "position": {"x": 25.0, "y": 32.0, "unit": "mm"},
+        "layer": "top_silkscreen",
+        "height": 1.0,
+        "width": 0.8,
+        "thickness": 0.15,
+        "unit": "mm",
+        "rotation": 0,
+        "mirrored": false,
+        "font": "standard",
+        "justification": "center",
+        "type": "refdes",
+        "visible": true,
+        
+        "semantic": {
+          "purpose": "Component reference designator",
+          "linkedComponent": "R1"
+        }
+      }
+    ],
+    
+    "lines": [
+      {
+        "id": "line_001",
+        "layer": "top_silkscreen",
+        "start": {"x": 10.0, "y": 10.0},
+        "end": {"x": 70.0, "y": 10.0},
+        "width": 0.15,
+        "unit": "mm",
+        "semantic": {
+          "purpose": "Board outline indicator"
+        }
+      }
+    ],
+    
+    "circles": [
+      {
+        "id": "circle_001",
+        "layer": "top_silkscreen",
+        "center": {"x": 20.0, "y": 20.0},
+        "radius": 2.0,
+        "width": 0.15,
+        "filled": false,
+        "unit": "mm",
+        "semantic": {
+          "purpose": "Polarity indicator for polarized component"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### 4.6.3 Solder Mask
+
+Solder mask defines openings that expose copper pads for soldering.
+
+**Schema:**
+
+```json
+{
+  "soldermask": {
+    "layers": ["top_mask", "bottom_mask"],
+    
+    "color": "green",
+    "finish": "matte",
+    
+    "global": {
+      "expansion": 0.05,
+      "unit": "mm",
+      "minimumSliver": 0.1
+    },
+    
+    "openings": [
+      {
+        "id": "mask_001",
+        "layer": "top_mask",
+        "associatedPad": {
+          "component": "R1",
+          "pad": "1"
+        },
+        "shape": "rectangle",
+        "size": {"width": 0.7, "height": 0.9, "unit": "mm"},
+        "position": {"x": 25.0, "y": 30.0},
+        "expansion": 0.05,
+        "semantic": {
+          "purpose": "Solder mask opening for component pad"
+        }
+      }
+    ],
+    
+    "properties": {
+      "thickness": 0.025,
+      "unit": "mm",
+      "dielectricConstant": 3.3
+    }
+  }
+}
+```
+
+#### 4.6.4 Solder Paste
+
+Solder paste (stencil) defines apertures for solder paste application.
+
+**Schema:**
+
+```json
+{
+  "solderpaste": {
+    "layers": ["top_paste", "bottom_paste"],
+    
+    "stencil": {
+      "thickness": 0.125,
+      "material": "stainless_steel",
+      "laserCut": true,
+      "electropolished": true
+    },
+    
+    "global": {
+      "reduction": 0.05,
+      "unit": "mm",
+      "ratioToPad": 0.9
+    },
+    
+    "apertures": [
+      {
+        "id": "paste_001",
+        "layer": "top_paste",
+        "associatedPad": {
+          "component": "R1",
+          "pad": "1"
+        },
+        "shape": "rectangle",
+        "size": {"width": 0.55, "height": 0.75, "unit": "mm"},
+        "position": {"x": 25.0, "y": 30.0},
+        "reduction": 0.05,
+        
+        "properties": {
+          "split": false,
+          "rounded": false
+        },
+        
+        "semantic": {
+          "purpose": "Solder paste deposit for component pad"
+        }
+      }
+    ]
+  }
+}
+```
+
+### 4.7 Manufacturing Data
+
+Manufacturing data includes Gerber files, drill data, and assembly information for PCB fabrication.
+
+#### 4.7.1 Gerber Files
+
+Gerber file references for each manufacturing layer.
+
+**Schema:**
+
+```json
+{
+  "manufacturing": {
+    "version": "1.0",
+    "generatedDate": "2025-01-11T10:00:00Z",
+    
+    "gerberFiles": {
+      "format": "RS-274X",
+      "unit": "mm",
+      "precision": "4.6",
+      
+      "layers": [
+        {
+          "type": "copper",
+          "layer": "top",
+          "file": "gerber/top_copper.gbr",
+          "md5": "abc123...",
+          "fileSize": 125634
+        },
+        {
+          "type": "copper",
+          "layer": "bottom",
+          "file": "gerber/bottom_copper.gbr"
+        },
+        {
+          "type": "soldermask",
+          "layer": "top",
+          "file": "gerber/top_mask.gbr"
+        },
+        {
+          "type": "silkscreen",
+          "layer": "top",
+          "file": "gerber/top_silk.gbr"
+        },
+        {
+          "type": "solderpaste",
+          "layer": "top",
+          "file": "gerber/top_paste.gbr"
+        },
+        {
+          "type": "outline",
+          "file": "gerber/board_outline.gbr"
+        }
+      ]
+    },
+    
+    "fabricationNotes": {
+      "material": "FR4",
+      "thickness": 1.6,
+      "copperWeight": {
+        "outer": 35,
+        "inner": 35,
+        "unit": "um"
+      },
+      "surfaceFinish": "ENIG",
+      "minTraceWidth": 0.15,
+      "minTraceSpacing": 0.15,
+      "minHoleSize": 0.25,
+      "unit": "mm",
+      "color": {
+        "soldermask": "green",
+        "silkscreen": "white"
+      }
+    }
+  }
+}
+```
+
+#### 4.7.2 Drill Files
+
+Drill file specifications for plated and non-plated holes.
+
+**Schema:**
+
+```json
+{
+  "drillFiles": {
+    "format": "Excellon",
+    "unit": "mm",
+    
+    "files": [
+      {
+        "type": "plated_through_hole",
+        "file": "gerber/drill_pth.drl",
+        "toolList": [
+          {"tool": "T01", "diameter": 0.3, "count": 45},
+          {"tool": "T02", "diameter": 0.8, "count": 12},
+          {"tool": "T03", "diameter": 1.0, "count": 4}
+        ]
+      },
+      {
+        "type": "non_plated_through_hole",
+        "file": "gerber/drill_npth.drl",
+        "toolList": [
+          {"tool": "T01", "diameter": 3.2, "count": 4}
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### 4.7.3 Assembly Data
+
+Assembly information including pick-and-place and BOM data.
+
+**Schema:**
+
+```json
+{
+  "assemblyData": {
+    "pickAndPlace": {
+      "format": "CSV",
+      "file": "assembly/pick_and_place.csv",
+      "columns": ["Designator", "X", "Y", "Rotation", "Side", "PartNumber"],
+      "unit": "mm",
+      "origin": "bottom_left"
+    },
+    
+    "bom": {
+      "format": "CSV",
+      "file": "assembly/bom.csv",
+      "columns": ["Designator", "Quantity", "PartNumber", "Manufacturer", "Description", "Value"],
+      "groupBy": "partNumber"
+    },
+    
+    "assemblyDrawing": {
+      "format": "PDF",
+      "file": "assembly/assembly_drawing.pdf",
+      "includes": [
+        "Component placement",
+        "Polarity indicators",
+        "Critical assembly notes",
+        "Test point locations"
+      ]
+    }
+  }
+}
+```
+
+### 4.8 3D Mechanical Integration
+
+3D mechanical data enables collision checking and mechanical validation.
+
+#### 4.8.1 Component Models
+
+3D model references for each component.
+
+**Schema:**
+
+```json
+{
+  "mechanical3D": {
+    "board": {
+      "model": "mechanical/board_3d.step",
+      "format": "STEP",
+      "origin": {"x": 0, "y": 0, "z": 0},
+      "unit": "mm"
+    },
+    
+    "components": [
+      {
+        "refDesignator": "U1",
+        "model": "mechanical/stm32f103.step",
+        "format": "STEP",
+        "position": {"x": 25.0, "y": 40.0, "z": 0},
+        "rotation": {"x": 0, "y": 0, "z": 90},
+        "scale": 1.0,
+        "boundingBox": {
+          "length": 7.0,
+          "width": 7.0,
+          "height": 1.2,
+          "unit": "mm"
+        },
+        "semantic": {
+          "purpose": "3D representation for mechanical clearance checking"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### 4.8.2 Keepout Zones
+
+3D keepout zones for mechanical clearance.
+
+**Schema:**
+
+```json
+{
+  "keepoutZones": [
+    {
+      "id": "keepout_001",
+      "shape": "cylinder",
+      "position": {"x": 5, "y": 5},
+      "radius": 1.6,
+      "height": 10.0,
+      "layer": "all",
+      "unit": "mm",
+      "semantic": {
+        "purpose": "Mounting screw clearance",
+        "reasoning": "M3 screw with 10mm standoff height"
+      }
+    }
+  ],
+  
+  "collisionChecks": {
+    "enabled": true,
+    "minClearance": 0.5,
+    "checkWith": ["components", "enclosure", "mounting_hardware"]
+  }
+}
+```
+
+### 4.9 Design Rule Checking
+
+Design rule definitions and violation reporting for validation.
+
+#### 4.9.1 Rule Definitions
+
+Complete design rule specifications.
+
+**Schema:**
+
+```json
+{
+  "designRules": {
+    "version": "1.0",
+    "lastChecked": "2025-01-11T15:30:00Z",
+    
+    "rules": {
+      "clearance": {
+        "copperToCopper": {
+          "minimum": 0.15,
+          "recommended": 0.2,
+          "unit": "mm"
+        },
+        "copperToOutline": {
+          "minimum": 0.3,
+          "unit": "mm"
+        },
+        "copperToHole": {
+          "minimum": 0.25,
+          "unit": "mm"
+        }
+      },
+      
+      "traceWidth": {
+        "minimum": 0.15,
+        "maximum": 10.0,
+        "power": {
+          "minimum": 0.5,
+          "recommended": 1.0
+        },
+        "signal": {
+          "minimum": 0.15,
+          "recommended": 0.2
+        },
+        "unit": "mm"
+      },
+      
+      "via": {
+        "drillMinimum": 0.25,
+        "padMinimum": 0.5,
+        "annularRingMinimum": 0.15,
+        "unit": "mm"
+      }
+    }
+  }
+}
+```
+
+#### 4.9.2 Violation Reporting
+
+Design rule violation tracking and reporting.
+
+**Schema:**
+
+```json
+{
+  "violations": [
+    {
+      "id": "violation_001",
+      "rule": "clearance.copperToCopper",
+      "severity": "error",
+      "description": "Traces too close on layer top",
+      "location": {
+        "layer": "top",
+        "position": {"x": 15.3, "y": 22.7},
+        "objects": ["trace_005", "trace_012"],
+        "actual": 0.12,
+        "required": 0.15,
+        "unit": "mm"
+      },
+      "suggestion": "Increase spacing or reroute one trace",
+      
+      "semantic": {
+        "impact": "Manufacturing yield risk",
+        "reasoning": "Insufficient clearance may cause shorts",
+        "priority": "high"
+      }
+    }
+  ],
+  
+  "statistics": {
+    "errors": 1,
+    "warnings": 3,
+    "info": 0,
+    "passed": false
+  }
+}
+```
+
 ---
 
 ## 5. API Specification
@@ -3338,6 +4142,35 @@ module
 - **MPN**: Manufacturer Part Number - unique part identifier from manufacturer
 - **Approval Status**: Component qualification state (draft, pending, approved, rejected, obsolete)
 - **Library Synchronization**: Process of keeping OpenPCBDB and external libraries in sync
+- **Trace**: Copper path on PCB connecting component pads; defined by width, layer, and segment geometry
+- **Segment**: Individual section of a trace (line, arc, or bezier curve)
+- **Via**: Plated hole connecting traces between PCB layers
+- **Through-Hole Via**: Via connecting all PCB layers from top to bottom
+- **Blind Via**: Via connecting outer layer to one or more inner layers (not through board)
+- **Buried Via**: Via connecting only inner layers (not visible from surface)
+- **Micro Via**: Small laser-drilled via typically less than 0.15mm diameter
+- **Copper Polygon**: Large copper area (pour zone) typically for power/ground planes
+- **Thermal Relief**: Spoke pattern connecting pad to copper plane (reduces heat sinking during soldering)
+- **Annular Ring**: Copper ring around via hole between drill and pad edge
+- **Pad**: Copper area on PCB where component lead is soldered
+- **SMD Pad**: Surface mount pad without through-hole
+- **THT Pad**: Through-hole technology pad with plated hole
+- **Silkscreen**: Screen-printed layer showing component outlines, text, and logos
+- **Solder Mask**: Protective coating on copper with openings at pads
+- **Solder Paste**: Solder cream applied through stencil for SMD assembly
+- **Stencil**: Metal sheet with apertures for applying solder paste
+- **Aperture**: Opening in stencil for paste deposition on pad
+- **Gerber Files**: Industry-standard manufacturing files for PCB fabrication
+- **RS-274X**: Extended Gerber format specification
+- **Excellon**: Standard drill file format
+- **Pick-and-Place**: Machine-readable component position file for automated assembly
+- **BOM (Bill of Materials)**: Complete list of components with quantities and part numbers
+- **DRC (Design Rule Check)**: Automated checking of design against manufacturing constraints
+- **Keepout Zone**: 3D area where components cannot be placed
+- **Clearance**: Minimum spacing between copper features
+- **Impedance Control**: Specific trace width/spacing for controlled electrical impedance
+- **Stackup**: Layer structure of PCB (copper and dielectric layers)
+- **STEP File**: Standard 3D mechanical model format (ISO 10303)
 
 ---
 
