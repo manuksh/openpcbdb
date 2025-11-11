@@ -4,7 +4,7 @@
 **Status:** Draft  
 **Version:** 1.0.0  
 **Date:** 2025-01-11  
-**Authors:** OpenPCBDB Community  
+**Authors:** Mintaka LLC  
 **License:** CC BY 4.0 (documentation) / Apache 2.0 (code)
 
 ---
