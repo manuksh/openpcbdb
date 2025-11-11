@@ -2,7 +2,7 @@
 
 > An open, semantic-rich database standard for electronic circuit and PCB design, optimized for AI/ML workflows and human collaboration.
 
-**License:** Apacke 2.0 | **Status:** Draft (v0.1.0) | **Language:** JSON/YAML
+**License:** Apache 2.0 | **Status:** Draft (v0.1.0) | **Language:** JSON/YAML
 
 ---
 
