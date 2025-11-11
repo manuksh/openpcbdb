@@ -3,9 +3,10 @@
 ---
 
 **Status:** Draft  
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Date:** 2025-11-11  
-**Authors:** Mintaka LLC, Armenia  
+**Authors:** Manuk Shemsyan
+**Company:** Mintaka LLC, Armenia, www.mintaka-ai.com  
 **License:** CC BY 4.0 (documentation) / Apache 2.0 (code)
 
 ---
@@ -22,11 +23,20 @@
    - 4.1 [Component Library Model](#41-component-library-model)
    - 4.2 [Design Entity Models](#42-design-entity-models)
       - 4.2.1 [ComponentDefinition](#421-componentdefinition)
-      - 4.2.2 [Net](#422-net)
-      - 4.2.3 [ComponentInstance](#423-componentinstance)
+      - 4.2.2 [ComponentInstance](#422-componentinstance)
+      - 4.2.3 [Net](#423-net)
       - 4.2.4 [FunctionalBlock](#424-functionalblock)
-      - 4.2.5 [Module](#425-module) **NEW**
+      - 4.2.5 [Module](#425-module)
    - 4.3 [Constraint Model](#43-constraint-model)
+   - 4.4 [User Library Integration](#44-user-library-integration) **NEW**
+      - 4.4.1 [Library Configuration](#441-library-configuration)
+      - 4.4.2 [SQL Database Schema](#442-sql-database-library-schema)
+      - 4.4.3 [SQLite Schema](#443-sqlite-library-schema)
+      - 4.4.4 [REST API Interface](#444-rest-api-library-interface)
+      - 4.4.5 [Component Instance with Library References](#445-component-instance-with-library-references)
+      - 4.4.6 [Library Synchronization](#446-library-synchronization)
+      - 4.4.7 [Query Examples](#447-query-examples)
+      - 4.4.8 [Library Best Practices](#448-library-best-practices)
 5. [API Specification](#5-api-specification)
 6. [File Format](#6-file-format)
    - 6.1 JSON Format
@@ -724,12 +734,50 @@ Components are the building blocks of electronic design. For AI to work effectiv
 
 #### 4.2.2 ComponentInstance (in design)
 
+Component instances represent actual component placements in the design with references to both OpenPCBDB definitions and external user libraries.
+
 ```json
 {
   "type": "ComponentInstance",
   "id": "R1",
   "refDesignator": "R1",
   "componentDefinitionId": "res_0603_10k_1pct",
+  
+  // Part identification for procurement
+  "partNumber": {
+    "manufacturer": "Yageo",
+    "manufacturerID": "MFR_YAGEO_001",
+    "mpn": "RC0603FR-0710KL",
+    "variant": "standard",
+    "revision": "A"
+  },
+  
+  // User library references
+  "userLibraryReferences": {
+    "primary": {
+      "libraryID": "company_approved_parts",
+      "libraryType": "sql",  // "sql", "sqlite", "json", "rest_api"
+      "componentID": "COMP_RES_0603_10K_001",
+      "lastVerified": "2025-01-10",
+      "approvalStatus": "qualified"
+    },
+    "symbol": {
+      "libraryID": "company_schematic_symbols",
+      "symbolID": "SYM_RESISTOR_0603",
+      "symbolReference": "resistor_2terminal"
+    },
+    "footprint": {
+      "libraryID": "company_pcb_footprints",
+      "footprintID": "FP_R_0603_1608Metric",
+      "footprintReference": "RES_0603_STD"
+    },
+    "mechanical": {
+      "libraryID": "company_3d_models",
+      "modelID": "MECH_R_0603_STD",
+      "mechanicalReference": "resistor_0603.step",
+      "format": "STEP"
+    }
+  },
   
   "sheet": "sheet_001",
   "block": "block_pwm_control",
@@ -1568,6 +1616,646 @@ Constraints are rules that AI must respect during design and validation.
     "criticalNetsHandRouted": ["net_gate_drive", "net_vcc_5v"],
     "aiGeneratedPercentage": 75,
     "layoutPattern": "standard_two_layer_smd"
+  }
+}
+```
+
+### 4.4 User Library Integration
+
+OpenPCBDB supports integration with external user-managed component libraries, enabling companies to maintain approved component databases in various formats including SQL databases, SQLite files, REST APIs, and file-based systems.
+
+#### 4.4.1 Library Configuration
+
+Configure library sources in the design metadata:
+
+```json
+{
+  "design": {
+    "metadata": {
+      "name": "Industrial Gateway",
+      "libraryConfiguration": {
+        "searchOrder": ["user_primary", "user_secondary", "vendor", "community", "standard"],
+        "userLibraries": [
+          {
+            "libraryID": "company_approved_parts",
+            "name": "Company Approved Parts Database",
+            "type": "sql",
+            "priority": 1,
+            "connection": {
+              "host": "db.company.com",
+              "port": 5432,
+              "database": "component_library",
+              "schema": "approved_parts",
+              "authMethod": "environment"  // Credentials from environment variables
+            },
+            "tables": {
+              "components": "tbl_components",
+              "symbols": "tbl_schematic_symbols",
+              "footprints": "tbl_pcb_footprints",
+              "mechanical": "tbl_3d_models",
+              "manufacturers": "tbl_manufacturers"
+            },
+            "approvalWorkflow": true,
+            "lastSync": "2025-01-11T08:00:00Z"
+          },
+          {
+            "libraryID": "local_cache",
+            "name": "Local SQLite Cache",
+            "type": "sqlite",
+            "priority": 2,
+            "connection": {
+              "file": "libraries/cache/components.db"
+            },
+            "readOnly": false,
+            "syncWithPrimary": true
+          },
+          {
+            "libraryID": "vendor_official",
+            "name": "Vendor Component Library API",
+            "type": "rest_api",
+            "priority": 3,
+            "connection": {
+              "baseURL": "https://api.vendor.com/components/v1",
+              "authMethod": "api_key",
+              "rateLimit": 100  // requests per minute
+            }
+          },
+          {
+            "libraryID": "legacy_json",
+            "name": "Legacy JSON Library",
+            "type": "json",
+            "priority": 4,
+            "connection": {
+              "path": "libraries/legacy/",
+              "indexFile": "components_index.json"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+#### 4.4.2 SQL Database Library Schema
+
+Standard SQL schema for component libraries:
+
+```sql
+-- Manufacturers table
+CREATE TABLE tbl_manufacturers (
+    manufacturer_id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    website VARCHAR(500),
+    contact_info TEXT,
+    certification_level VARCHAR(50),  -- 'preferred', 'approved', 'acceptable'
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Components table
+CREATE TABLE tbl_components (
+    component_id VARCHAR(100) PRIMARY KEY,
+    manufacturer_id VARCHAR(50) REFERENCES tbl_manufacturers(manufacturer_id),
+    mpn VARCHAR(100) NOT NULL,  -- Manufacturer Part Number
+    variant VARCHAR(50),
+    revision VARCHAR(20),
+    category VARCHAR(100),  -- 'passive.resistor', 'active.ic', etc.
+    subcategory VARCHAR(100),
+    description TEXT,
+    datasheet_url VARCHAR(500),
+    
+    -- Electrical parameters (JSON for flexibility)
+    electrical_params JSONB,
+    
+    -- Physical properties
+    package VARCHAR(50),
+    dimensions JSONB,  -- {length, width, height, unit}
+    weight_grams DECIMAL(10,4),
+    mounting_type VARCHAR(50),  -- 'SMD', 'THT', 'module'
+    
+    -- References to other tables
+    symbol_id VARCHAR(100),
+    footprint_id VARCHAR(100),
+    mechanical_id VARCHAR(100),
+    
+    -- Procurement
+    typical_cost DECIMAL(10,4),
+    currency VARCHAR(3),
+    lead_time_days INTEGER,
+    lifecycle_status VARCHAR(50),  -- 'active', 'nrnd', 'obsolete'
+    rohs_compliant BOOLEAN,
+    
+    -- Approval workflow
+    approval_status VARCHAR(50),  -- 'draft', 'pending', 'approved', 'rejected'
+    approved_by VARCHAR(100),
+    approval_date DATE,
+    
+    -- Metadata
+    created_by VARCHAR(100),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    last_verified TIMESTAMP,
+    
+    -- Full-text search
+    search_vector TSVECTOR
+);
+
+-- Schematic symbols table
+CREATE TABLE tbl_schematic_symbols (
+    symbol_id VARCHAR(100) PRIMARY KEY,
+    symbol_reference VARCHAR(200) NOT NULL,  -- Symbol name/reference
+    library_name VARCHAR(100),
+    description TEXT,
+    pin_count INTEGER,
+    pins JSONB,  -- Array of pin definitions
+    graphic_data TEXT,  -- SVG, KiCad S-expr, or other format
+    format VARCHAR(50),  -- 'svg', 'kicad_symbol', 'altium_lib'
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- PCB footprints table
+CREATE TABLE tbl_pcb_footprints (
+    footprint_id VARCHAR(100) PRIMARY KEY,
+    footprint_reference VARCHAR(200) NOT NULL,
+    library_name VARCHAR(100),
+    description TEXT,
+    pad_count INTEGER,
+    pads JSONB,  -- Array of pad definitions
+    dimensions JSONB,  -- Outline dimensions
+    keepout_zones JSONB,
+    graphic_data TEXT,  -- Footprint geometry
+    format VARCHAR(50),  -- 'kicad_footprint', 'ipc_7351', 'altium_pcblib'
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- 3D mechanical models table
+CREATE TABLE tbl_3d_models (
+    mechanical_id VARCHAR(100) PRIMARY KEY,
+    mechanical_reference VARCHAR(200) NOT NULL,
+    description TEXT,
+    file_path VARCHAR(500),
+    file_format VARCHAR(50),  -- 'STEP', 'IGES', 'STL', 'WRL'
+    file_size_bytes INTEGER,
+    bounding_box JSONB,  -- {length, width, height}
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Component relationships (alternates, substitutions)
+CREATE TABLE tbl_component_relationships (
+    relationship_id SERIAL PRIMARY KEY,
+    component_id VARCHAR(100) REFERENCES tbl_components(component_id),
+    related_component_id VARCHAR(100) REFERENCES tbl_components(component_id),
+    relationship_type VARCHAR(50),  -- 'alternate', 'substitute', 'upgrade', 'downgrade'
+    notes TEXT,
+    created_at TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX idx_components_mpn ON tbl_components(mpn);
+CREATE INDEX idx_components_category ON tbl_components(category);
+CREATE INDEX idx_components_manufacturer ON tbl_components(manufacturer_id);
+CREATE INDEX idx_components_approval ON tbl_components(approval_status);
+CREATE INDEX idx_components_lifecycle ON tbl_components(lifecycle_status);
+CREATE INDEX idx_components_search ON tbl_components USING GIN(search_vector);
+```
+
+#### 4.4.3 SQLite Library Schema
+
+For local/embedded libraries, use simplified SQLite schema:
+
+```sql
+-- SQLite version (simplified, single-file)
+CREATE TABLE components (
+    component_id TEXT PRIMARY KEY,
+    manufacturer TEXT,
+    manufacturer_id TEXT,
+    mpn TEXT NOT NULL,
+    category TEXT,
+    description TEXT,
+    datasheet_url TEXT,
+    electrical_params TEXT,  -- JSON as TEXT
+    package TEXT,
+    symbol_id TEXT,
+    footprint_id TEXT,
+    mechanical_id TEXT,
+    typical_cost REAL,
+    approval_status TEXT,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE symbols (
+    symbol_id TEXT PRIMARY KEY,
+    symbol_reference TEXT,
+    pin_count INTEGER,
+    pins TEXT,  -- JSON as TEXT
+    graphic_data TEXT,
+    format TEXT
+);
+
+CREATE TABLE footprints (
+    footprint_id TEXT PRIMARY KEY,
+    footprint_reference TEXT,
+    pad_count INTEGER,
+    pads TEXT,  -- JSON as TEXT
+    graphic_data TEXT,
+    format TEXT
+);
+
+CREATE TABLE mechanical_models (
+    mechanical_id TEXT PRIMARY KEY,
+    mechanical_reference TEXT,
+    file_path TEXT,
+    file_format TEXT
+);
+
+CREATE INDEX idx_comp_mpn ON components(mpn);
+CREATE INDEX idx_comp_category ON components(category);
+```
+
+#### 4.4.4 REST API Library Interface
+
+Standard REST API endpoints for component libraries:
+
+```
+GET    /api/v1/components              # List components (paginated)
+GET    /api/v1/components/:id          # Get component details
+POST   /api/v1/components/search       # Search components
+GET    /api/v1/components/:id/symbol   # Get symbol data
+GET    /api/v1/components/:id/footprint # Get footprint data
+GET    /api/v1/components/:id/mechanical # Get 3D model
+
+GET    /api/v1/manufacturers           # List manufacturers
+GET    /api/v1/symbols                 # List symbols
+GET    /api/v1/footprints              # List footprints
+
+# Example query parameters
+GET /api/v1/components?category=passive.resistor&mpn=RC0603*&limit=50
+POST /api/v1/components/search
+{
+  "query": "10k resistor 0603",
+  "filters": {
+    "category": "passive.resistor",
+    "approval_status": "approved",
+    "lifecycle_status": "active"
+  }
+}
+```
+
+#### 4.4.5 Component Instance with Library References
+
+Complete example showing library integration:
+
+```json
+{
+  "type": "ComponentInstance",
+  "instanceId": "U1",
+  "refDesignator": "U1",
+  
+  // Part identification
+  "partNumber": {
+    "manufacturer": "Texas Instruments",
+    "manufacturerID": "MFR_TI_001",
+    "mpn": "TPS63001DRCR",
+    "variant": "tape_and_reel",
+    "revision": "C"
+  },
+  
+  // User library references
+  "userLibraryReferences": {
+    "primary": {
+      "libraryID": "company_approved_parts",
+      "libraryType": "sql",
+      "componentID": "COMP_IC_DCDC_TPS63001",
+      "query": {
+        "table": "tbl_components",
+        "where": "mpn = 'TPS63001DRCR' AND approval_status = 'approved'"
+      },
+      "lastVerified": "2025-01-10T14:30:00Z",
+      "approvalStatus": "approved",
+      "approvedBy": "Engineering Team",
+      "approvalDate": "2024-11-15"
+    },
+    
+    "symbol": {
+      "libraryID": "company_schematic_symbols",
+      "libraryType": "sql",
+      "symbolID": "SYM_IC_DCDC_10PIN_VSON",
+      "symbolReference": "IC_DCDC_BUCK_BOOST_10PIN",
+      "query": {
+        "table": "tbl_schematic_symbols",
+        "where": "symbol_id = 'SYM_IC_DCDC_10PIN_VSON'"
+      },
+      "format": "kicad_symbol",
+      "pins": {
+        "count": 11,  // 10 pins + 1 thermal pad
+        "mapping": {
+          "1": "VOUT",
+          "2": "FB",
+          "3": "L2",
+          "4": "GND",
+          "5": "L1",
+          "6": "VIN",
+          "7": "EN",
+          "8": "PS_SYNC",
+          "9": "VINA",
+          "10": "PAD"
+        }
+      }
+    },
+    
+    "footprint": {
+      "libraryID": "company_pcb_footprints",
+      "libraryType": "sql",
+      "footprintID": "FP_VSON10_3x3MM",
+      "footprintReference": "VSON-10_3x3mm_P0.5mm",
+      "query": {
+        "table": "tbl_pcb_footprints",
+        "where": "footprint_id = 'FP_VSON10_3x3MM'"
+      },
+      "format": "ipc_7351",
+      "padCount": 11,
+      "thermalPad": true
+    },
+    
+    "mechanical": {
+      "libraryID": "company_3d_models",
+      "libraryType": "sql",
+      "modelID": "MECH_VSON10_3x3",
+      "mechanicalReference": "TPS63001_3D_MODEL",
+      "query": {
+        "table": "tbl_3d_models",
+        "where": "mechanical_id = 'MECH_VSON10_3x3'"
+      },
+      "file": "models/IC/TPS63001_VSON10.step",
+      "format": "STEP",
+      "offset": {"x": 0, "y": 0, "z": 0},
+      "rotation": {"x": 0, "y": 0, "z": 0},
+      "scale": 1.0
+    },
+    
+    // Alternative/fallback library
+    "fallback": {
+      "libraryID": "vendor_ti_library",
+      "libraryType": "rest_api",
+      "componentID": "TI_TPS63001DRCR",
+      "apiEndpoint": "https://api.ti.com/components/TPS63001DRCR",
+      "note": "Use if primary library unavailable"
+    }
+  },
+  
+  // EDA tool specific mappings (for compatibility)
+  "edaMappings": {
+    "KiCad": {
+      "library": "Power_Management",
+      "symbol": "TPS63001",
+      "footprint": "Package_SON:VSON-10-1EP_3x3mm_P0.5mm_EP1.65x2.4mm"
+    },
+    "Altium": {
+      "schematicLib": "PowerICs.SchLib",
+      "component": "TPS63001",
+      "pcbLib": "PowerICs.PcbLib",
+      "footprint": "VSON10_3X3"
+    }
+  },
+  
+  "placement": {
+    "x": 50.0,
+    "y": 50.0,
+    "rotation": 0,
+    "layer": "top",
+    "unit": "mm"
+  }
+}
+```
+
+#### 4.4.6 Library Synchronization
+
+Configure synchronization between OpenPCBDB and user libraries:
+
+```json
+{
+  "librarySyncConfiguration": {
+    "enabled": true,
+    "syncInterval": "hourly",  // "realtime", "hourly", "daily", "manual"
+    "syncDirection": "bidirectional",  // "read_only", "write_only", "bidirectional"
+    
+    "mappings": [
+      {
+        "libraryID": "company_approved_parts",
+        "opcbdbField": "componentDefinitionId",
+        "libraryField": "component_id",
+        "syncRules": {
+          "onUpdate": "notify",  // "auto_update", "notify", "ignore"
+          "onDelete": "archive",  // "delete", "archive", "ignore"
+          "onApprovalChange": "update_status"
+        }
+      }
+    ],
+    
+    "conflictResolution": {
+      "strategy": "user_library_wins",  // "user_library_wins", "opcbdb_wins", "manual"
+      "notifyOnConflict": true,
+      "logPath": "logs/library_sync.log"
+    },
+    
+    "caching": {
+      "enabled": true,
+      "localCache": "cache/library_cache.db",
+      "cacheTTL": 3600,  // seconds
+      "preloadCategories": ["passive.resistor", "passive.capacitor"]
+    }
+  }
+}
+```
+
+#### 4.4.7 Query Examples
+
+**SQL Library Query:**
+```python
+import openpcbdb
+
+# Connect to user library
+library = openpcbdb.UserLibrary.connect(
+    library_id="company_approved_parts",
+    type="sql",
+    host="db.company.com",
+    database="component_library"
+)
+
+# Query for component
+results = library.query("""
+    SELECT c.component_id, c.mpn, c.description, 
+           s.symbol_reference, f.footprint_reference
+    FROM tbl_components c
+    LEFT JOIN tbl_schematic_symbols s ON c.symbol_id = s.symbol_id
+    LEFT JOIN tbl_pcb_footprints f ON c.footprint_id = f.footprint_id
+    WHERE c.category = 'passive.resistor'
+      AND c.electrical_params->>'resistance' = '10000'
+      AND c.package = '0603'
+      AND c.approval_status = 'approved'
+    LIMIT 10
+""")
+
+# Use component in design
+for comp in results:
+    instance = openpcbdb.ComponentInstance(
+        refDesignator=f"R{n}",
+        partNumber={
+            "mpn": comp['mpn']
+        },
+        userLibraryReferences={
+            "primary": {
+                "libraryID": "company_approved_parts",
+                "componentID": comp['component_id']
+            }
+        }
+    )
+```
+
+**SQLite Library Query:**
+```python
+# Connect to SQLite library
+library = openpcbdb.UserLibrary.connect(
+    library_id="local_cache",
+    type="sqlite",
+    file="libraries/cache/components.db"
+)
+
+# Search components
+results = library.search(
+    category="active.ic",
+    mpn_pattern="TPS6300%",
+    approval_status="approved"
+)
+```
+
+**REST API Library Query:**
+```python
+# Connect to REST API library
+library = openpcbdb.UserLibrary.connect(
+    library_id="vendor_official",
+    type="rest_api",
+    base_url="https://api.vendor.com/components/v1",
+    api_key=os.getenv("VENDOR_API_KEY")
+)
+
+# Search via API
+results = library.get(
+    endpoint="/components/search",
+    params={
+        "query": "buck-boost converter",
+        "category": "power_management",
+        "voltage_range": "2.5-5.5V"
+    }
+)
+```
+
+#### 4.4.8 Library Best Practices
+
+**1. Library Structure Organization:**
+```
+company_library/
+├── components/
+│   ├── passive/
+│   │   ├── resistors.json
+│   │   └── capacitors.json
+│   ├── active/
+│   └── modules/
+├── symbols/
+│   ├── schematic/
+│   │   ├── resistors/
+│   │   └── ics/
+│   └── formats/
+│       ├── kicad/
+│       └── altium/
+├── footprints/
+│   ├── smd/
+│   └── tht/
+├── mechanical/
+│   ├── step/
+│   └── wrl/
+└── config/
+    ├── library_config.json
+    └── sync_rules.json
+```
+
+**2. Naming Conventions:**
+```json
+{
+  "namingConventions": {
+    "componentID": "COMP_{CATEGORY}_{TYPE}_{SPEC}_{INDEX}",
+    "symbolID": "SYM_{TYPE}_{PINCOUNT}_{VARIANT}",
+    "footprintID": "FP_{PACKAGE}_{SIZE}_{VARIANT}",
+    "mechanicalID": "MECH_{PACKAGE}_{SIZE}",
+    
+    "examples": {
+      "componentID": "COMP_RES_0603_10K_001",
+      "symbolID": "SYM_RESISTOR_2PIN_HORIZ",
+      "footprintID": "FP_R_0603_1608Metric",
+      "mechanicalID": "MECH_R_0603_STD"
+    }
+  }
+}
+```
+
+**3. Approval Workflow:**
+```json
+{
+  "approvalWorkflow": {
+    "stages": [
+      {
+        "stage": "draft",
+        "description": "Initial component entry",
+        "allowedActions": ["edit", "submit_for_review"]
+      },
+      {
+        "stage": "pending_review",
+        "description": "Awaiting engineering review",
+        "requiredReviewers": ["electrical_engineer", "pcb_designer"],
+        "allowedActions": ["approve", "reject", "request_changes"]
+      },
+      {
+        "stage": "approved",
+        "description": "Approved for use in designs",
+        "restrictions": ["no_edit_without_reapproval"],
+        "allowedActions": ["use_in_design", "mark_for_update"]
+      },
+      {
+        "stage": "obsolete",
+        "description": "End of life, use discouraged",
+        "allowedActions": ["view_only", "find_replacement"]
+      }
+    ]
+  }
+}
+```
+
+**4. Multi-Site Synchronization:**
+```json
+{
+  "multiSiteSync": {
+    "sites": [
+      {
+        "siteID": "HQ_USA",
+        "libraryURL": "https://lib-usa.company.com",
+        "role": "primary",
+        "syncMode": "push"
+      },
+      {
+        "siteID": "FACTORY_CHINA",
+        "libraryURL": "https://lib-china.company.com",
+        "role": "replica",
+        "syncMode": "pull",
+        "syncInterval": "daily"
+      }
+    ],
+    "conflictResolution": "primary_wins",
+    "auditLog": true
   }
 }
 ```
@@ -2641,6 +3329,15 @@ module
 - **AI Agent**: Artificial intelligence system that can understand and create designs
 - **Carrier Board**: Parent PCB that hosts one or more modules
 - **System-on-Module (SoM)**: Complete computer system on a small PCB module
+- **User Library**: External component database managed by user/company (SQL, SQLite, REST API, or file-based)
+- **Library Reference**: Link from component instance to external library entry
+- **Symbol Reference**: Schematic symbol representation identifier in library
+- **Footprint Reference**: PCB footprint identifier in library
+- **Mechanical Reference**: 3D model identifier in library
+- **Manufacturer ID**: Unique identifier for component manufacturer in library system
+- **MPN**: Manufacturer Part Number - unique part identifier from manufacturer
+- **Approval Status**: Component qualification state (draft, pending, approved, rejected, obsolete)
+- **Library Synchronization**: Process of keeping OpenPCBDB and external libraries in sync
 
 ---
 
