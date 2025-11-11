@@ -1,14 +1,14 @@
 # OpenPCBDB Specification v1.0
 ## Open PCB Design Database Standard
+---
 
 **Status:** Draft  
-**Version:** 1.0.0  
-**Date:** 2025-01-11  
-**Authors:** Mintaka LLC  
+**Version:** 1.1.0  
+**Date:** 2025-11-11  
+**Authors:** Mintaka LLC, Armenia  
 **License:** CC BY 4.0 (documentation) / Apache 2.0 (code)
 
 ---
-
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
@@ -19,8 +19,18 @@
 2. [Scope and Objectives](#2-scope-and-objectives)
 3. [Core Architecture](#3-core-architecture)
 4. [Data Models](#4-data-models)
+   - 4.1 [Component Library Model](#41-component-library-model)
+   - 4.2 [Design Entity Models](#42-design-entity-models)
+      - 4.2.1 [ComponentDefinition](#421-componentdefinition)
+      - 4.2.2 [Net](#422-net)
+      - 4.2.3 [ComponentInstance](#423-componentinstance)
+      - 4.2.4 [FunctionalBlock](#424-functionalblock)
+      - 4.2.5 [Module](#425-module) **NEW**
+   - 4.3 [Constraint Model](#43-constraint-model)
 5. [API Specification](#5-api-specification)
 6. [File Format](#6-file-format)
+   - 6.1 JSON Format
+   - 6.2 Directory Structure for Large Projects
    - 6.3 [Compression and Storage Optimization](#63-compression-and-storage-optimization)
 7. [AI/ML Integration](#7-aiml-integration)
 8. [Reference Implementation](#8-reference-implementation)
@@ -353,11 +363,12 @@ OpenPCBDB is fundamentally a **semantic graph** where:
 1. **Design** - Top-level container for entire project
 2. **Library** - Reusable component and symbol definitions
 3. **Component** - Electronic parts (resistors, ICs, connectors)
-4. **Net** - Electrical connections between pins
-5. **Pin** - Connection points on components
-6. **Constraint** - Rules and requirements
-7. **Block** - Functional grouping of components
-8. **Port** - Hierarchical interface points
+4. **Module** - Physical separate PCB assembly integrated into parent design (e.g., SoM, DIMM, daughterboard)
+5. **Net** - Electrical connections between pins
+6. **Pin** - Connection points on components
+7. **Constraint** - Rules and requirements
+8. **Block** - Functional grouping of components (logical grouping on same PCB)
+9. **Port** - Hierarchical interface points
 
 **Relationship Types:**
 
@@ -365,6 +376,9 @@ OpenPCBDB is fundamentally a **semantic graph** where:
 - `supplies` - Power/signal supply relationship
 - `controls` - Control relationship
 - `belongs_to` - Hierarchical containment
+- `contains` - Module contains internal design
+- `instantiates` - Parent design instantiates module
+- `interfaces_with` - Module interfaces with parent via connector
 - `similar_to` - Design pattern relationship
 - `alternative_to` - Design alternative
 - `derived_from` - Design evolution
@@ -951,6 +965,461 @@ AI understands designs better when organized into functional blocks.
     "learningNotes": "Successful design pattern for LED dimming applications"
   }
 }
+```
+
+#### 4.2.5 Module
+
+**Purpose**: Modules represent **physical separate PCB assemblies** that are integrated into a parent design. Unlike FunctionalBlocks (which are logical groupings on the same PCB), modules are distinct boards with their own complete design hierarchy.
+
+**Key Differences:**
+- **FunctionalBlock**: Logical grouping of components on the same PCB (no physical separation)
+- **Module**: Physical separate board with connector interface (e.g., System-on-Module, DIMM, M.2 card, daughterboard)
+
+**Use Cases:**
+- System-on-Module (SoM) designs (Raspberry Pi Compute Module, i.MX8 modules)
+- Memory modules (DIMM, SO-DIMM, LPDDR)
+- Wireless modules (WiFi, Bluetooth, Cellular)
+- Power modules (DC-DC converter modules, PoE modules)
+- Sensor modules (IMU, GPS, camera)
+- Display modules (LCD, OLED)
+- Interface modules (USB hub, Ethernet PHY)
+
+**Full Schema:**
+
+```json
+{
+  "type": "ModuleDefinition",
+  "id": "module_som_imx8",
+  "name": "i.MX8 System-on-Module",
+  "version": "1.2",
+  
+  "identification": {
+    "manufacturer": "Example Inc",
+    "partNumber": "SOM-IMX8-001",
+    "category": "module.som",
+    "subcategory": "arm_cortex_a53",
+    "description": "Complete embedded Linux computer on a module with i.MX8 processor"
+  },
+  
+  "interface": {
+    "connectorType": "board_to_board_connector",
+    "connectorMPN": "DF40C-100DP-0.4V",
+    "pinCount": 100,
+    "pitch": {"value": 0.4, "unit": "mm"},
+    "pins": [
+      {
+        "id": "1",
+        "name": "VIN_5V",
+        "electricalType": "power_input",
+        "voltage": {"nominal": 5.0, "min": 4.75, "max": 5.25, "unit": "V"},
+        "currentMax": {"value": 3.0, "unit": "A"},
+        "function": "Main power input"
+      },
+      {
+        "id": "2",
+        "name": "GND",
+        "electricalType": "ground",
+        "function": "Ground reference"
+      },
+      {
+        "id": "10",
+        "name": "UART0_TX",
+        "electricalType": "output",
+        "type": "digital",
+        "voltage": {"logic": "3.3V", "unit": "V"},
+        "function": "Debug UART transmit"
+      },
+      {
+        "id": "20",
+        "name": "ETH_MDI0_P",
+        "electricalType": "bidirectional",
+        "type": "differential",
+        "differentialPair": "ETH_MDI0_N",
+        "impedance": {"value": 100, "unit": "ohm"},
+        "function": "Ethernet PHY differential pair positive"
+      },
+      {
+        "id": "21",
+        "name": "ETH_MDI0_N",
+        "electricalType": "bidirectional",
+        "type": "differential",
+        "differentialPair": "ETH_MDI0_P",
+        "impedance": {"value": 100, "unit": "ohm"},
+        "function": "Ethernet PHY differential pair negative"
+      }
+    ]
+  },
+  
+  "physical": {
+    "formFactor": "custom_som",
+    "dimensions": {
+      "length": 50,
+      "width": 40,
+      "height": 5.5,
+      "unit": "mm"
+    },
+    "weight": {"value": 12, "unit": "g"},
+    "mounting": "board_to_board_connector",
+    "connectorLocation": {
+      "x": 25,
+      "y": 20,
+      "orientation": "bottom",
+      "unit": "mm"
+    },
+    "keepoutZones": [
+      {
+        "shape": "rectangle",
+        "x": 10, "y": 10,
+        "width": 5,
+        "height": 5,
+        "layer": "top",
+        "unit": "mm",
+        "reason": "Heat spreader clearance for processor"
+      }
+    ]
+  },
+  
+  "internalDesign": {
+    "reference": "designs/som_imx8/som_imx8.opcbdb",
+    "type": "opcbdb",
+    "componentCount": 247,
+    "netCount": 1053,
+    "layerCount": 8,
+    "complexity": "high",
+    "canBeOpened": true,
+    "abstraction": "white_box"
+  },
+  
+  "functionalCapabilities": {
+    "processor": {
+      "type": "i.MX8 QuadLite",
+      "architecture": "ARM Cortex-A53",
+      "cores": 4,
+      "frequency": {"value": 1.5, "unit": "GHz"},
+      "features": ["NEON", "TrustZone", "Crypto"]
+    },
+    "memory": {
+      "ram": {"size": 2, "unit": "GB", "type": "LPDDR4", "speed": "3200 MT/s"},
+      "storage": {"size": 16, "unit": "GB", "type": "eMMC", "speed": "HS400"}
+    },
+    "interfaces": [
+      "ethernet_1gbit",
+      "usb_2.0_host",
+      "usb_3.0_host",
+      "uart_debug",
+      "i2c_x2",
+      "spi_x2",
+      "gpio_x20",
+      "can_x2"
+    ],
+    "video": ["hdmi_1080p", "lvds_display", "mipi_dsi"],
+    "audio": ["i2s", "spdif"]
+  },
+  
+  "powerRequirements": {
+    "inputs": [
+      {
+        "rail": "VIN_5V",
+        "voltage": {"nominal": 5.0, "min": 4.75, "max": 5.25, "unit": "V"},
+        "currentIdle": {"value": 0.5, "unit": "A"},
+        "currentTypical": {"value": 1.2, "unit": "A"},
+        "currentPeak": {"value": 3.0, "unit": "A"},
+        "purpose": "Main power input"
+      }
+    ],
+    "totalPower": {
+      "idle": {"value": 2.5, "unit": "W"},
+      "typical": {"value": 6.0, "unit": "W"},
+      "peak": {"value": 15.0, "unit": "W"}
+    },
+    "inrushCurrent": {"value": 5.0, "duration": 10, "unit": "A", "durationUnit": "ms"}
+  },
+  
+  "thermal": {
+    "ambientTemperatureRange": {"min": 0, "max": 85, "unit": "°C"},
+    "junctionTemperatureMax": {"value": 105, "unit": "°C"},
+    "thermalResistance": {"value": 15, "unit": "°C/W", "withHeatsink": 8},
+    "coolingRequired": "passive_heatsink_recommended",
+    "powerDissipation": {"typical": 6.0, "max": 15.0, "unit": "W"},
+    "heatsinkMountingHoles": [
+      {"x": 15, "y": 15, "diameter": 2.5, "unit": "mm"},
+      {"x": 35, "y": 15, "diameter": 2.5, "unit": "mm"}
+    ]
+  },
+  
+  "functionalBlocks": [
+    {
+      "name": "CPU Complex",
+      "description": "i.MX8 QuadLite ARM Cortex-A53 processor with 4 cores",
+      "components": ["U1", "C1-C24"],
+      "power": {"typical": 3.5, "max": 8.0, "unit": "W"}
+    },
+    {
+      "name": "Memory Subsystem",
+      "description": "2GB LPDDR4 RAM with controller",
+      "components": ["U2", "U3", "C25-C40"],
+      "power": {"typical": 1.0, "max": 3.0, "unit": "W"}
+    },
+    {
+      "name": "Storage",
+      "description": "16GB eMMC flash storage",
+      "components": ["U4", "C41-C45"],
+      "power": {"typical": 0.5, "max": 1.0, "unit": "W"}
+    },
+    {
+      "name": "Power Management",
+      "description": "PMIC with multiple voltage rails",
+      "components": ["U5", "L1-L5", "C46-C80"],
+      "power": {"typical": 0.8, "max": 2.0, "unit": "W"}
+    },
+    {
+      "name": "Ethernet PHY",
+      "description": "1Gbit Ethernet transceiver",
+      "components": ["U6", "R1-R10", "C81-C90"],
+      "power": {"typical": 0.5, "max": 1.0, "unit": "W"}
+    }
+  ],
+  
+  "semantic": {
+    "purpose": "Complete embedded computer system on a module for rapid system integration",
+    "function": "Linux-capable ARM processing module with memory, storage, and peripherals",
+    "domain": "digital",
+    "critical": true,
+    "designPattern": "system_on_module",
+    "typicalUseCases": [
+      "Industrial control systems",
+      "IoT gateways",
+      "Medical devices",
+      "Embedded vision systems",
+      "Building automation",
+      "Test and measurement equipment"
+    ],
+    "reasoning": "Modular approach reduces main board design complexity and time-to-market. Pre-certified module simplifies regulatory compliance.",
+    "alternatives": [
+      {
+        "approach": "Discrete CPU design on main board",
+        "pros": ["Full control", "Optimized for specific application", "Lower BOM cost at volume"],
+        "cons": ["High complexity", "Long development time (6-12 months)", "Higher risk", "DDR routing expertise required"],
+        "reasonRejected": "Development time and complexity too high for product schedule"
+      },
+      {
+        "approach": "Single board computer (Raspberry Pi style)",
+        "pros": ["Very low cost", "Ready availability", "Large community"],
+        "cons": ["Limited customization", "Non-industrial temp range", "No carrier board integration"],
+        "reasonRejected": "Need industrial temperature range and custom I/O integration"
+      }
+    ]
+  },
+  
+  "procurement": {
+    "datasheetUrl": "https://example.com/som-imx8-datasheet.pdf",
+    "unitCost": {"value": 85.00, "currency": "USD", "quantity": 100},
+    "leadTime": {"typical": 8, "max": 12, "unit": "weeks"},
+    "minimumOrderQuantity": 1,
+    "lifecycleStatus": "active",
+    "availability": "good",
+    "alternativeSources": ["Digikey", "Mouser", "Arrow", "Direct from manufacturer"],
+    "eolDate": null,
+    "replacementPart": null
+  },
+  
+  "designGuidelines": {
+    "layoutNotes": [
+      "Keep high-speed differential pairs (USB, Ethernet) away from module edges",
+      "Provide solid ground plane under module connector on carrier board",
+      "Add 100nF decoupling caps on each power pin at carrier board connector",
+      "Allow 10mm keepout around module perimeter for heatsink clearance",
+      "Route critical signals (clocks, resets) with controlled impedance",
+      "Maintain differential pair spacing and impedance through connector"
+    ],
+    "powerDeliveryNotes": [
+      "5V input must support 3A peak current with <100mV ripple",
+      "Add bulk capacitance (100uF minimum) near connector on carrier board",
+      "Trace width to module connector: minimum 40 mils (1mm) for main power",
+      "Use 2oz copper or heavier on power planes",
+      "Ensure low impedance ground return path"
+    ],
+    "thermalNotes": [
+      "Mount heatsink on top of processor (mounting holes at specified coordinates)",
+      "Ensure airflow over module or use larger heatsink if ambient temp > 50°C",
+      "Thermal pad on bottom of module should contact carrier board copper pour",
+      "Consider fan for enclosed applications or continuous high CPU load"
+    ],
+    "signalIntegrityNotes": [
+      "USB 3.0 differential pairs: 90Ω impedance, max 5mm length mismatch",
+      "Ethernet differential pairs: 100Ω impedance, keep away from switching noise",
+      "HDMI signals: 100Ω differential impedance, shield from other signals",
+      "Clock signals: Use series termination, avoid vias if possible"
+    ]
+  },
+  
+  "complianceAndCertification": {
+    "tested": ["FCC_Part_15_Class_B", "CE_EMC", "RoHS", "REACH"],
+    "certificationDocuments": [
+      {"type": "FCC", "url": "fcc_cert.pdf", "number": "FCC-ID-12345"},
+      {"type": "CE", "url": "ce_cert.pdf", "number": "CE-2024-001"}
+    ],
+    "operatingSystemsSupported": ["Linux", "Android", "Yocto", "Buildroot"]
+  },
+  
+  "aiMetadata": {
+    "complexity": "high",
+    "reusabilityScore": 0.95,
+    "abstractionLevel": "system",
+    "blackBox": false,
+    "canBeSimulated": true,
+    "commonIntegrationIssues": [
+      "Power supply noise coupling into analog signals on carrier board",
+      "Ground loops if multiple ground connections used incorrectly",
+      "Impedance mismatch on high-speed signals at connector interface",
+      "Thermal issues if heatsink not properly mounted",
+      "Signal integrity problems with long traces on carrier board"
+    ],
+    "designPatternTags": ["system_on_module", "arm_processor", "industrial_embedded", "linux_computer"],
+    "learningNotes": "Module abstracts complex DDR4 routing and power sequencing. Carrier board design complexity reduced by 70%. Time-to-market reduced from 12 months to 3 months."
+  }
+}
+```
+
+**Module Instance in Parent Design:**
+
+When a module is used in a parent design, it is instantiated as a component instance:
+
+```json
+{
+  "type": "ComponentInstance",
+  "instanceId": "MOD1",
+  "definitionId": "module_som_imx8",
+  "definitionType": "module",
+  
+  "definition": {
+    "$ref": "library/modules/som_imx8.json"
+  },
+  
+  "placement": {
+    "x": 50,
+    "y": 50,
+    "rotation": 0,
+    "layer": "top",
+    "unit": "mm"
+  },
+  
+  "configuration": {
+    "firmwareVersion": "1.2.3",
+    "bootMode": "eMMC",
+    "customSettings": {
+      "enable_ethernet": true,
+      "enable_hdmi": false,
+      "enable_wifi": false
+    }
+  },
+  
+  "semantic": {
+    "purpose": "Main processing module for industrial control system",
+    "reasoning": "Selected for industrial temperature range (-40 to +85°C) and Linux support with long-term availability",
+    "critical": true,
+    "instanceSpecific": "Configured for headless operation with Ethernet connectivity only"
+  }
+}
+```
+
+**Multiple Module Instances Example:**
+
+Modules can be instantiated multiple times in a design (e.g., memory modules, redundant systems):
+
+```json
+{
+  "design": {
+    "metadata": {
+      "name": "Redundant Control System",
+      "description": "Dual SoM design with automatic failover"
+    },
+    "components": [
+      {
+        "instanceId": "MOD_PRIMARY",
+        "definitionId": "module_som_imx8",
+        "definitionType": "module",
+        "semantic": {
+          "purpose": "Primary controller",
+          "role": "master"
+        }
+      },
+      {
+        "instanceId": "MOD_BACKUP",
+        "definitionId": "module_som_imx8",
+        "definitionType": "module",
+        "semantic": {
+          "purpose": "Backup controller for redundancy",
+          "role": "standby_failover"
+        }
+      }
+    ],
+    "nets": [
+      {
+        "id": "net_watchdog",
+        "name": "WATCHDOG",
+        "connections": [
+          {"component": "MOD_PRIMARY", "pin": "GPIO_10"},
+          {"component": "MOD_BACKUP", "pin": "GPIO_10"},
+          {"component": "U_SUPERVISOR", "pin": "WD_IN"}
+        ],
+        "semantic": {
+          "purpose": "Cross-monitoring watchdog for failover detection"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Module Categories:**
+
+Modules are categorized by their primary function and form factor:
+
+```
+module
+├── som (System-on-Module)
+│   ├── arm_cortex_a
+│   ├── arm_cortex_m
+│   ├── x86_64
+│   ├── risc_v
+│   └── fpga
+├── memory
+│   ├── dimm
+│   ├── so_dimm
+│   ├── lpddr
+│   └── ddr5
+├── power
+│   ├── dc_dc_module
+│   ├── ac_dc_module
+│   ├── poe_module
+│   └── battery_module
+├── wireless
+│   ├── wifi_module
+│   ├── bluetooth_module
+│   ├── cellular_module
+│   ├── lora_module
+│   └── zigbee_module
+├── sensor
+│   ├── imu_module
+│   ├── gps_module
+│   ├── camera_module
+│   └── environmental_sensor
+├── display
+│   ├── lcd_module
+│   ├── oled_module
+│   ├── e_paper_module
+│   └── tft_module
+├── interface
+│   ├── usb_hub_module
+│   ├── ethernet_phy_module
+│   ├── can_transceiver_module
+│   └── rs485_module
+└── expansion
+    ├── arduino_shield
+    ├── raspberry_pi_hat
+    ├── mikroelektronika_click
+    └── pc104_module
 ```
 
 ### 4.3 Constraint Model
@@ -2086,6 +2555,56 @@ electronics
     └── relay
 ```
 
+**Module Categories:**
+
+Modules represent physical separate PCB assemblies:
+
+```
+module
+├── som (System-on-Module)
+│   ├── arm_cortex_a
+│   ├── arm_cortex_m
+│   ├── x86_64
+│   ├── risc_v
+│   └── fpga
+├── memory
+│   ├── dimm
+│   ├── so_dimm
+│   ├── lpddr
+│   └── ddr5
+├── power
+│   ├── dc_dc_module
+│   ├── ac_dc_module
+│   ├── poe_module
+│   └── battery_module
+├── wireless
+│   ├── wifi_module
+│   ├── bluetooth_module
+│   ├── cellular_module
+│   ├── lora_module
+│   └── zigbee_module
+├── sensor
+│   ├── imu_module
+│   ├── gps_module
+│   ├── camera_module
+│   └── environmental_sensor
+├── display
+│   ├── lcd_module
+│   ├── oled_module
+│   ├── e_paper_module
+│   └── tft_module
+├── interface
+│   ├── usb_hub_module
+│   ├── ethernet_phy_module
+│   ├── can_transceiver_module
+│   └── rs485_module
+└── expansion
+    ├── arduino_shield
+    ├── raspberry_pi_hat
+    ├── mikroelektronika_click
+    └── pc104_module
+```
+
 **Net Types:**
 - `power` - Power supply nets
 - `ground` - Ground nets
@@ -2114,11 +2633,14 @@ electronics
 
 - **Semantic Data**: Information about meaning and purpose, not just geometry
 - **Design Intent**: The reasoning behind design decisions
-- **Functional Block**: Group of components serving a specific function
+- **Functional Block**: Group of components serving a specific function (logical grouping on same PCB)
+- **Module**: Physical separate PCB assembly that integrates into parent design (e.g., SoM, DIMM, daughterboard)
 - **Component Instance**: Specific occurrence of a component in a design
 - **Net**: Electrical connection between component pins
 - **Constraint**: Rule or requirement that design must satisfy
 - **AI Agent**: Artificial intelligence system that can understand and create designs
+- **Carrier Board**: Parent PCB that hosts one or more modules
+- **System-on-Module (SoM)**: Complete computer system on a small PCB module
 
 ---
 
@@ -2566,6 +3088,324 @@ electronics
     }
   }
 }
+```
+
+#### 10.3.5 Module Usage in Motherboard Design
+
+**Purpose**: Demonstrate how modules are integrated into complex motherboard designs.
+
+Motherboards commonly use multiple module types:
+- System-on-Module (SoM) for main processor
+- DIMM/SO-DIMM for memory
+- M.2 modules for WiFi, storage
+- Mini-PCIe for wireless cards
+- Power modules for voltage regulation
+
+**Example: Industrial Motherboard with SoM**
+
+```json
+{
+  "design": {
+    "metadata": {
+      "name": "Industrial Motherboard with i.MX8 SoM",
+      "description": "Carrier board design for System-on-Module with expansion interfaces"
+    },
+    
+    "components": [
+      {
+        "instanceId": "MOD_CPU",
+        "definitionId": "module_som_imx8",
+        "definitionType": "module",
+        "definition": {
+          "$ref": "library/modules/som_imx8.json"
+        },
+        "placement": {
+          "x": 75,
+          "y": 60,
+          "rotation": 0,
+          "layer": "top"
+        },
+        "semantic": {
+          "purpose": "Main computing module with processor, RAM, and storage",
+          "reasoning": "SoM approach reduces carrier board complexity and development time",
+          "critical": true
+        }
+      },
+      {
+        "instanceId": "MOD_WIFI",
+        "definitionId": "module_m2_wifi",
+        "definitionType": "module",
+        "definition": {
+          "manufacturer": "Intel",
+          "partNumber": "AX200.NGWG.DTK",
+          "category": "module.wireless.wifi_module",
+          "interface": {
+            "connectorType": "M.2_E_key",
+            "interfaces": ["PCIe_Gen3_x1", "USB_2.0", "UART"]
+          }
+        },
+        "placement": {
+          "x": 120,
+          "y": 40,
+          "rotation": 0,
+          "layer": "top"
+        },
+        "semantic": {
+          "purpose": "WiFi 6 and Bluetooth 5.2 wireless connectivity",
+          "reasoning": "M.2 module allows easy upgrade and certification reuse"
+        }
+      },
+      {
+        "instanceId": "MOD_DIMM1",
+        "definitionId": "module_so_dimm_ddr4",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.memory.so_dimm",
+          "interface": {
+            "connectorType": "SO-DIMM_260pin",
+            "type": "DDR4"
+          },
+          "configuration": {
+            "capacity": "variable",  // User-installable
+            "speed": ["2400", "2666", "3200"]
+          }
+        },
+        "placement": {
+          "x": 150,
+          "y": 80,
+          "rotation": 0,
+          "layer": "top"
+        },
+        "semantic": {
+          "purpose": "Expandable system memory slot",
+          "reasoning": "SO-DIMM allows user to configure memory capacity (4GB to 32GB)"
+        }
+      },
+      {
+        "instanceId": "MOD_POWER_5V",
+        "definitionId": "module_dc_dc_12v_5v",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.power.dc_dc_module",
+          "interface": {
+            "inputVoltage": {"min": 9, "max": 36, "nominal": 12, "unit": "V"},
+            "outputVoltage": {"value": 5.0, "unit": "V"},
+            "outputCurrent": {"max": 10, "unit": "A"}
+          }
+        },
+        "placement": {
+          "x": 30,
+          "y": 80,
+          "rotation": 0,
+          "layer": "top"
+        },
+        "semantic": {
+          "purpose": "Main 5V power rail generation from 12V input",
+          "reasoning": "Isolated module reduces EMI and simplifies power design"
+        }
+      }
+    ],
+    
+    "nets": [
+      {
+        "id": "net_pcie_to_wifi",
+        "name": "PCIE_TO_WIFI",
+        "type": "high_speed_differential",
+        "connections": [
+          {"component": "MOD_CPU", "pin": "PCIE1_TX_P"},
+          {"component": "MOD_CPU", "pin": "PCIE1_TX_N"},
+          {"component": "MOD_WIFI", "pin": "PCIE_RX_P"},
+          {"component": "MOD_WIFI", "pin": "PCIE_RX_N"}
+        ],
+        "constraints": {
+          "impedance": {"value": 100, "unit": "ohm", "type": "differential"},
+          "lengthMatch": {"max": 5, "unit": "mil"},
+          "routing": "Controlled impedance, avoid vias if possible"
+        },
+        "semantic": {
+          "purpose": "PCIe Gen3 x1 connection from SoM to WiFi module",
+          "critical": true
+        }
+      },
+      {
+        "id": "net_5v_main",
+        "name": "5V_MAIN",
+        "type": "power",
+        "connections": [
+          {"component": "MOD_POWER_5V", "pin": "VOUT"},
+          {"component": "MOD_CPU", "pin": "VIN_5V"},
+          {"component": "U_USB_HUB", "pin": "VDD"},
+          {"component": "J_USB_PORTS", "pin": "VBUS"}
+        ],
+        "constraints": {
+          "minWidth": {"value": 1.0, "unit": "mm"},
+          "maxCurrent": {"value": 8.0, "unit": "A"},
+          "maxVoltageDrop": {"value": 100, "unit": "mV"}
+        },
+        "semantic": {
+          "purpose": "Main 5V power distribution",
+          "critical": true
+        }
+      }
+    ],
+    
+    "functionalBlocks": [
+      {
+        "id": "block_compute",
+        "name": "Compute Module",
+        "components": ["MOD_CPU", "MOD_DIMM1"],
+        "purpose": "Main processing with expandable memory"
+      },
+      {
+        "id": "block_connectivity",
+        "name": "Wireless Connectivity",
+        "components": ["MOD_WIFI", "U_ANTENNA_SWITCH"],
+        "purpose": "WiFi and Bluetooth connectivity"
+      },
+      {
+        "id": "block_power",
+        "name": "Power Supply",
+        "components": ["MOD_POWER_5V", "U_LDO_3V3", "C1-C20"],
+        "purpose": "Power generation and distribution"
+      }
+    ],
+    
+    "designGuidelines": {
+      "moduleIntegration": [
+        "SoM connector requires solid ground plane on carrier board",
+        "Place 100nF decoupling caps at each power pin on carrier side",
+        "High-speed signals (PCIe, USB 3.0) must use controlled impedance routing",
+        "M.2 WiFi module requires antenna keepout zone",
+        "SO-DIMM socket requires matched length DDR4 routing from CPU",
+        "Power module input needs bulk capacitance (470uF minimum)",
+        "Allow proper thermal clearance around all modules"
+      ],
+      "aiNotes": "Module-based design reduces carrier board complexity by 60%. Main processor routing (DDR4, eMMC) is contained in SoM. Carrier board only routes lower-speed interfaces."
+    }
+  }
+}
+```
+
+**Module Integration Benefits:**
+
+1. **Reduced Complexity**: SoM contains complex DDR4 routing and power sequencing
+2. **Faster Development**: Carrier board design time reduced from 12 months to 3-4 months
+3. **Modularity**: Easy to swap compute module for different performance tiers
+4. **Certification Reuse**: Pre-certified modules simplify EMC compliance
+5. **Risk Reduction**: Proven module design reduces technical risk
+6. **Flexibility**: User-installable memory and WiFi modules
+
+**Example: Server Motherboard with Multiple Module Types**
+
+```json
+{
+  "design": {
+    "metadata": {
+      "name": "Server Motherboard ATX",
+      "description": "2-socket server motherboard with modular components"
+    },
+    "components": [
+      {
+        "instanceId": "CPU1_VRM",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.power.vrm_module",
+          "phases": 12,
+          "outputVoltage": {"min": 0.8, "max": 1.5, "unit": "V"},
+          "outputCurrent": {"max": 200, "unit": "A"}
+        },
+        "semantic": {
+          "purpose": "12-phase VRM for CPU1 power delivery",
+          "reasoning": "Modular VRM allows thermal and electrical optimization"
+        }
+      },
+      {
+        "instanceId": "DIMM_A1",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.memory.dimm",
+          "type": "DDR5_RDIMM"
+        },
+        "semantic": {
+          "purpose": "DDR5 RDIMM slot for channel A, rank 0",
+          "instanceSpecific": "User-installable, supports 16GB to 128GB"
+        }
+      },
+      {
+        "instanceId": "DIMM_A2",
+        "definitionType": "module",
+        "definition": {"$ref": "#/components/DIMM_A1/definition"}
+      },
+      {
+        "instanceId": "NIC_MEZZ",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.interface.ocp_mezzanine",
+          "interfaces": ["PCIe_Gen4_x16"],
+          "ports": ["2x25GbE", "2x10GbE"]
+        },
+        "semantic": {
+          "purpose": "OCP 3.0 mezzanine network card",
+          "reasoning": "Mezzanine form factor saves PCIe slots and reduces latency"
+        }
+      },
+      {
+        "instanceId": "M2_NVME_1",
+        "definitionType": "module",
+        "definition": {
+          "category": "module.storage.m2_nvme",
+          "formFactor": "M.2_2280",
+          "interface": "PCIe_Gen4_x4"
+        },
+        "semantic": {
+          "purpose": "NVMe SSD boot drive slot"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Key Considerations for Module Integration:**
+
+1. **Interface Specification**: Define clear electrical and mechanical interfaces
+2. **Power Requirements**: Account for module inrush current and peak power
+3. **Thermal Management**: Ensure adequate cooling for high-power modules
+4. **Signal Integrity**: Maintain impedance through connector transitions
+5. **Mechanical Constraints**: Keepout zones, mounting holes, connector alignment
+6. **Configuration Management**: Track module versions and configurations
+7. **Abstraction Levels**: AI can work with modules as black boxes or dive into internal design
+
+**AI Reasoning with Modules:**
+
+```python
+# AI can reason about module selection
+def select_compute_module(requirements):
+    candidates = query_modules(category="module.som")
+    
+    for module in candidates:
+        # Check if module meets requirements
+        if module.processor.cores >= requirements.min_cores:
+            if module.memory.ram >= requirements.min_memory:
+                if module.thermal.ambient_temp_max >= requirements.operating_temp:
+                    if module.functionalCapabilities.interfaces.contains(requirements.needed_interfaces):
+                        return module
+    
+    return None
+
+# AI understands abstraction
+selected_som = select_compute_module({
+    "min_cores": 4,
+    "min_memory": 2,  # GB
+    "operating_temp": 85,  # °C
+    "needed_interfaces": ["ethernet", "usb_3.0", "can"]
+})
+
+# AI can optimize carrier board knowing SoM handles DDR routing
+carrier_complexity = calculate_complexity(
+    exclude_internal_to_modules=True
+)
+# Result: 70% reduction in carrier board routing complexity
 ```
 
 ### 10.4 Motherboard Design Best Practices for AI
