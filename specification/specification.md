@@ -5018,7 +5018,7 @@ Motherboard
 
 ---
 
-**Document Version:** 1.0 Draft  
+**Document Version:** 1.3.0 Draft  
 **Last Updated:** 2025-01-11  
 **Status:** Open for Community Review  
 
@@ -5028,4 +5028,4 @@ Motherboard
 
 ---
 
-**END OF SPECIFICATION v1.0**
+**END OF SPECIFICATION v1.3.0**
