@@ -303,7 +303,7 @@ Balances theoretical completeness with real-world usability and performance.
 This specification is released under the **MIT License**, making it free to use, modify, and distribute.
 
 ```
-Copyright (c) 2025 OpenPCBDB Contributors
+Copyright (c) 2025 Mintaka LLC 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this specification and associated documentation files, to deal in the
