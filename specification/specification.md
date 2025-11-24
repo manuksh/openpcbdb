@@ -27,6 +27,7 @@
       - 4.2.3 [Net](#423-net)
       - 4.2.4 [FunctionalBlock](#424-functionalblock)
       - 4.2.5 [Module](#425-module)
+      - 4.2.6 [NetClass](#426-netclass)
    - 4.3 [Constraint Model](#43-constraint-model)
    - 4.4 [User Library Integration](#44-user-library-integration)
       - 4.4.1 [Library Configuration](#441-library-configuration)
@@ -37,40 +38,44 @@
       - 4.4.6 [Library Synchronization](#446-library-synchronization)
       - 4.4.7 [Query Examples](#447-query-examples)
       - 4.4.8 [Library Best Practices](#448-library-best-practices)
-   - 4.5 [Physical Routing Model](#45-physical-routing-model) **NEW**
+   - 4.5 [Physical Routing Model](#45-physical-routing-model) 
       - 4.5.1 [Trace Geometry](#451-trace-geometry)
       - 4.5.2 [Via Definitions](#452-via-definitions)
       - 4.5.3 [Copper Polygons](#453-copper-polygons)
-   - 4.6 [Manufacturing Layers](#46-manufacturing-layers) **NEW**
+   - 4.6 [Manufacturing Layers](#46-manufacturing-layers) 
       - 4.6.1 [Pad Geometries](#461-pad-geometries)
       - 4.6.2 [Silkscreen Graphics](#462-silkscreen-graphics)
       - 4.6.3 [Solder Mask](#463-solder-mask)
       - 4.6.4 [Solder Paste](#464-solder-paste)
-   - 4.7 [Manufacturing Data](#47-manufacturing-data) **NEW**
+   - 4.7 [Manufacturing Data](#47-manufacturing-data) 
       - 4.7.1 [Gerber Files](#471-gerber-files)
       - 4.7.2 [Drill Files](#472-drill-files)
       - 4.7.3 [Assembly Data](#473-assembly-data)
-   - 4.8 [3D Mechanical Integration](#48-3d-mechanical-integration) **NEW**
+   - 4.8 [3D Mechanical Integration](#48-3d-mechanical-integration) 
       - 4.8.1 [Component Models](#481-component-models)
       - 4.8.2 [Keepout Zones](#482-keepout-zones)
-   - 4.9 [Design Rule Checking](#49-design-rule-checking) **NEW**
+   - 4.9 [Design Rule Checking](#49-design-rule-checking)
       - 4.9.1 [Rule Definitions](#491-rule-definitions)
       - 4.9.2 [Violation Reporting](#492-violation-reporting)
-5. [API Specification](#5-api-specification)
-6. [File Format](#6-file-format)
-   - 6.1 [JSON Format](#61-json-format-primary)
-   - 6.2 [Directory Structure for Large Projects](#62-directory-structure-for-large-projects)
-   - 6.3 [Compression and Storage Optimization](#63-compression-and-storage-optimization)
-7. [AI/ML Integration](#7-aiml-integration)
-8. [Reference Implementation](#8-reference-implementation)
-9. [Appendices](#9-appendices)
-10. [Complex Design Support: Motherboard Example](#10-complex-design-support-motherboard-example)
-    - 10.1 [Motherboard Design Requirements](#101-motherboard-design-requirements)
-    - 10.2 [Gap Analysis](#102-gap-analysis-for-motherboard-design)
-    - 10.3 [Extended Data Models](#103-extended-data-models-for-motherboard-design)
-    - 10.4 [Best Practices for AI](#104-motherboard-design-best-practices-for-ai)
-    - 10.5 [Recommendations for v1.0](#105-recommendations-for-v10)
-11. [Future Extensions](#11-future-extensions-v20)
+   - 4.10 [Electrical Rule Checking](#410-electrical-rule-checking) 
+      - 4.10.1 [Pin Compatibility Rules](#4101-pin-compatibility-rules)
+      - 4.10.2 [Power and Ground Validation](#4102-power-and-ground-validation)
+      - 4.10.3 [ERC Violation Reporting](#4103-erc-violation-reporting)
+5. [API Specification](#6-api-specification)
+6. [File Format](#7-file-format)
+   - 6.1 [JSON Format](#71-json-format-primary)
+   - 6.2 [Directory Structure for Large Projects](#72-directory-structure-for-large-projects)
+   - 6.3 [Compression and Storage Optimization](#73-compression-and-storage-optimization)
+7. [AI/ML Integration](#8-aiml-integration)
+8. [Reference Implementation](#9-reference-implementation)
+9. [Appendices](#10-appendices)
+10. [Complex Design Support: Motherboard Example](#11-complex-design-support-motherboard-example)
+    - 10.1 [Motherboard Design Requirements](#111-motherboard-design-requirements)
+    - 10.2 [Gap Analysis](#112-gap-analysis-for-motherboard-design)
+    - 10.3 [Extended Data Models](#113-extended-data-models-for-motherboard-design)
+    - 10.4 [Best Practices for AI](#114-motherboard-design-best-practices-for-ai)
+    - 10.5 [Recommendations for v1.0](#115-recommendations-for-v10)
+11. [Future Extensions](#12-future-extensions-v20)
 
 ---
 
@@ -1487,6 +1492,354 @@ module
     ├── raspberry_pi_hat
     ├── mikroelektronika_click
     └── pc104_module
+```
+
+#### 4.2.6 NetClass
+
+**Purpose**: NetClass entities define reusable sets of routing rules and electrical characteristics for groups of nets. This allows AI to efficiently manage and understand nets with similar requirements (e.g., all power nets, all high-speed signals).
+
+**Key Differences from Constraints:**
+- **NetClass**: Defines a template of routing rules that can be applied to multiple nets
+- **Constraint**: Defines specific validation rules for design verification
+
+**Use Cases:**
+- Power distribution nets (wide traces, low impedance)
+- High-speed differential pairs (controlled impedance, matched length)
+- Low-speed digital signals (default routing)
+- Analog signals (shielding, separation from digital)
+- Clock distribution (specific impedance, length matching)
+
+**Full Schema:**
+
+```json
+{
+  "type": "NetClass",
+  "id": "netclass_power_5v",
+  "name": "Power_5V",
+  "version": "1.0",
+  
+  "description": "Routing rules for 5V power distribution nets",
+  
+  "routingRules": {
+    "traceWidth": {
+      "min": 0.5,
+      "typical": 1.0,
+      "max": 2.0,
+      "unit": "mm",
+      "reasoning": "Based on 500mA max current and 10°C temperature rise"
+    },
+    "clearance": {
+      "min": 0.2,
+      "typical": 0.3,
+      "unit": "mm"
+    },
+    "viaDiameter": {
+      "min": 0.4,
+      "typical": 0.6,
+      "unit": "mm"
+    },
+    "viaDrillDiameter": {
+      "min": 0.2,
+      "typical": 0.3,
+      "unit": "mm"
+    },
+    "viaCount": {
+      "min": 2,
+      "reasoning": "Redundancy for reliability"
+    },
+    "differentialPair": {
+      "enabled": false
+    }
+  },
+  
+  "electricalRules": {
+    "maxCurrent": {
+      "value": 0.5,
+      "unit": "A"
+    },
+    "maxVoltage": {
+      "value": 5.5,
+      "unit": "V"
+    },
+    "impedance": {
+      "controlled": false
+    }
+  },
+  
+  "layerPreferences": {
+    "preferred": ["top", "bottom"],
+    "avoided": ["inner1", "inner2"],
+    "allowPlane": false,
+    "allowPolygonPour": true
+  },
+  
+  "semantic": {
+    "purpose": "Power distribution nets requiring wide traces",
+    "domain": "power",
+    "critical": true,
+    "typicalNets": ["VCC", "VDD", "5V", "3V3"],
+    "aiNotes": "Always verify current capacity calculations. Consider voltage drop over trace length."
+  },
+  
+  "metadata": {
+    "created": "2025-01-11T10:00:00Z",
+    "author": "design_team",
+    "usageCount": 127
+  }
+}
+```
+
+**High-Speed Differential Pair NetClass Example:**
+
+```json
+{
+  "type": "NetClass",
+  "id": "netclass_usb_diff",
+  "name": "USB_Differential",
+  
+  "description": "USB 2.0 differential pair routing rules",
+  
+  "routingRules": {
+    "traceWidth": {
+      "min": 0.15,
+      "typical": 0.2,
+      "max": 0.25,
+      "unit": "mm",
+      "reasoning": "Calculated for 90Ω differential impedance on 1.6mm FR4"
+    },
+    "clearance": {
+      "min": 0.2,
+      "typical": 0.3,
+      "unit": "mm"
+    },
+    "differentialPair": {
+      "enabled": true,
+      "spacing": {
+        "value": 0.15,
+        "tolerance": 0.02,
+        "unit": "mm"
+      },
+      "impedance": {
+        "differential": 90,
+        "tolerance": 10,
+        "unit": "ohm"
+      },
+      "lengthMatching": {
+        "intraPairSkew": {
+          "max": 0.15,
+          "unit": "mm"
+        },
+        "interPairSkew": {
+          "max": 5.0,
+          "unit": "mm"
+        }
+      },
+      "viasAllowed": false,
+      "layerChangesAllowed": false
+    }
+  },
+  
+  "electricalRules": {
+    "maxFrequency": {
+      "value": 480,
+      "unit": "MHz"
+    },
+    "impedance": {
+      "controlled": true,
+      "differential": 90,
+      "tolerance": 10,
+      "unit": "ohm"
+    },
+    "riseTime": {
+      "typical": 1.5,
+      "unit": "ns"
+    }
+  },
+  
+  "layerPreferences": {
+    "preferred": ["top"],
+    "avoided": [],
+    "allowPlane": false,
+    "requiresContinuousGround": true
+  },
+  
+  "semantic": {
+    "purpose": "High-speed differential signaling",
+    "domain": "high_speed_digital",
+    "critical": true,
+    "typicalNets": ["USB_DP", "USB_DM", "D+", "D-"],
+    "designPattern": "differential_pair_90ohm",
+    "aiNotes": "Keep traces as short as possible. Avoid vias and layer changes. Route away from switching power supplies. Minimize stubs."
+  }
+}
+```
+
+**Default/Low-Speed NetClass Example:**
+
+```json
+{
+  "type": "NetClass",
+  "id": "netclass_default",
+  "name": "Default",
+  
+  "description": "Default routing rules for general signals",
+  
+  "routingRules": {
+    "traceWidth": {
+      "min": 0.15,
+      "typical": 0.2,
+      "unit": "mm"
+    },
+    "clearance": {
+      "min": 0.15,
+      "typical": 0.2,
+      "unit": "mm"
+    },
+    "viaDiameter": {
+      "min": 0.4,
+      "typical": 0.6,
+      "unit": "mm"
+    },
+    "viaDrillDiameter": {
+      "min": 0.2,
+      "typical": 0.3,
+      "unit": "mm"
+    },
+    "differentialPair": {
+      "enabled": false
+    }
+  },
+  
+  "electricalRules": {
+    "impedance": {
+      "controlled": false
+    }
+  },
+  
+  "semantic": {
+    "purpose": "General purpose signals with no special requirements",
+    "domain": "digital",
+    "critical": false,
+    "aiNotes": "Standard manufacturing design rules apply"
+  }
+}
+```
+
+**Net Referencing NetClass:**
+
+When defining nets, reference the NetClass to inherit all routing rules:
+
+```json
+{
+  "type": "Net",
+  "id": "net_vcc_5v",
+  "name": "VCC_5V",
+  "netClass": "netclass_power_5v",
+  
+  "connections": [
+    {"component": "U1", "pin": "8"},
+    {"component": "C1", "pin": "1"}
+  ],
+  
+  "semantic": {
+    "type": "power",
+    "purpose": "Main 5V power rail"
+  }
+}
+```
+
+**Design-Level NetClass Definitions:**
+
+NetClasses are defined at the design level:
+
+```json
+{
+  "type": "Design",
+  "name": "USB_Hub_Board",
+  
+  "netClasses": [
+    {
+      "$ref": "netclass_default"
+    },
+    {
+      "$ref": "netclass_power_5v"
+    },
+    {
+      "$ref": "netclass_usb_diff"
+    },
+    {
+      "type": "NetClass",
+      "id": "netclass_custom_clock",
+      "name": "Clock_Signals",
+      "routingRules": {
+        "traceWidth": {"min": 0.2, "unit": "mm"},
+        "clearance": {"min": 0.3, "unit": "mm"}
+      },
+      "semantic": {
+        "purpose": "Clock distribution with controlled routing"
+      }
+    }
+  ],
+  
+  "nets": [
+    {
+      "id": "net_vcc",
+      "name": "VCC",
+      "netClass": "netclass_power_5v"
+    },
+    {
+      "id": "net_usb_dp",
+      "name": "USB_DP",
+      "netClass": "netclass_usb_diff",
+      "differentialPairWith": "net_usb_dm"
+    },
+    {
+      "id": "net_usb_dm",
+      "name": "USB_DM",
+      "netClass": "netclass_usb_diff",
+      "differentialPairWith": "net_usb_dp"
+    }
+  ]
+}
+```
+
+**AI Benefits:**
+
+1. **Pattern Recognition**: AI can learn that all nets in "netclass_usb_diff" require similar careful routing
+2. **Auto-Assignment**: AI can automatically assign appropriate NetClasses to new nets based on semantic analysis
+3. **Validation**: AI can verify that net routing complies with NetClass rules before manufacturing
+4. **Optimization**: AI can suggest trace width adjustments within NetClass constraints
+5. **Knowledge Transfer**: NetClass definitions can be reused across projects
+
+**Common NetClass Categories:**
+
+```
+netclass
+├── power
+│   ├── high_current (>1A)
+│   ├── medium_current (100mA-1A)
+│   ├── low_current (<100mA)
+│   └── analog_power (low noise requirements)
+├── signal
+│   ├── default (general digital)
+│   ├── high_speed_single_ended
+│   ├── differential_pair
+│   │   ├── usb_2.0 (90Ω)
+│   │   ├── usb_3.0 (90Ω)
+│   │   ├── ethernet_100base (100Ω)
+│   │   ├── pcie (85Ω)
+│   │   ├── hdmi (100Ω)
+│   │   └── lvds (100Ω)
+│   ├── clock
+│   └── reset
+├── analog
+│   ├── high_impedance
+│   ├── audio
+│   └── sensor
+└── special
+    ├── antenna (RF)
+    ├── shielded
+    └── esd_protected
 ```
 
 ### 4.3 Constraint Model
@@ -3066,7 +3419,612 @@ Design rule violation tracking and reporting.
 
 ---
 
-## 5. API Specification
+### 4.10 Electrical Rule Checking
+
+Electrical rule definitions and validation for circuit correctness and safety.
+
+#### 4.10.1 Pin Compatibility Rules
+
+Pin-to-pin electrical compatibility checking to prevent connection errors.
+
+**Schema:**
+
+```json
+{
+  "electricalRules": {
+    "version": "1.0",
+    "lastChecked": "2025-01-11T15:30:00Z",
+    
+    "pinCompatibility": {
+      "rules": [
+        {
+          "id": "erc_rule_001",
+          "name": "Output to Output Conflict",
+          "severity": "error",
+          "description": "Two output pins cannot be directly connected",
+          "pattern": {
+            "pin1Type": "output",
+            "pin2Type": "output",
+            "action": "error"
+          },
+          "semantic": {
+            "reasoning": "Multiple drivers can cause bus contention and damage",
+            "impact": "Circuit malfunction or component damage",
+            "exceptions": [
+              "Open-drain/open-collector outputs with pull-up",
+              "Tri-state outputs with proper bus arbitration"
+            ]
+          }
+        },
+        {
+          "id": "erc_rule_002",
+          "name": "Unconnected Input Pin",
+          "severity": "warning",
+          "description": "Input pin not connected to any net",
+          "pattern": {
+            "pinType": "input",
+            "connected": false,
+            "action": "warning"
+          },
+          "semantic": {
+            "reasoning": "Floating inputs can cause unpredictable behavior",
+            "impact": "Undefined logic levels, noise susceptibility",
+            "exceptions": [
+              "Pins with internal pull-up/pull-down",
+              "Unused inputs on multi-gate packages"
+            ]
+          }
+        },
+        {
+          "id": "erc_rule_003",
+          "name": "Power Pin Not Connected",
+          "severity": "error",
+          "description": "Power input pin not connected to power net",
+          "pattern": {
+            "pinType": "power_input",
+            "connected": false,
+            "action": "error"
+          },
+          "semantic": {
+            "reasoning": "Components require power to function",
+            "impact": "Component will not operate"
+          }
+        },
+        {
+          "id": "erc_rule_004",
+          "name": "Input Without Driver",
+          "severity": "error",
+          "description": "Input pin connected to net with no driver",
+          "pattern": {
+            "pinType": "input",
+            "netHasOutput": false,
+            "action": "error"
+          },
+          "semantic": {
+            "reasoning": "Inputs need a signal source",
+            "impact": "Undefined logic state"
+          }
+        },
+        {
+          "id": "erc_rule_005",
+          "name": "Conflicting Power Nets",
+          "severity": "error",
+          "description": "Different voltage power nets shorted together",
+          "pattern": {
+            "net1Type": "power",
+            "net2Type": "power",
+            "net1Voltage": "3.3V",
+            "net2Voltage": "5V",
+            "connected": true,
+            "action": "error"
+          },
+          "semantic": {
+            "reasoning": "Shorting different voltages causes damage",
+            "impact": "Power supply damage, board failure"
+          }
+        }
+      ],
+      
+      "pinTypeMatrix": {
+        "description": "Pin compatibility matrix for connection validation",
+        "matrix": {
+          "output_to_input": "ok",
+          "output_to_output": "error",
+          "output_to_bidirectional": "ok",
+          "output_to_passive": "ok",
+          "output_to_power": "error",
+          "output_to_ground": "error",
+          
+          "input_to_input": "warning",
+          "input_to_bidirectional": "ok",
+          "input_to_passive": "ok",
+          "input_to_power": "error",
+          "input_to_ground": "error",
+          
+          "bidirectional_to_bidirectional": "ok",
+          "bidirectional_to_passive": "ok",
+          "bidirectional_to_power": "error",
+          "bidirectional_to_ground": "error",
+          
+          "passive_to_passive": "ok",
+          "passive_to_power": "ok",
+          "passive_to_ground": "ok",
+          
+          "power_to_power": "warning",
+          "power_to_ground": "error",
+          
+          "ground_to_ground": "ok"
+        }
+      }
+    }
+  }
+}
+```
+
+**Pin Type Definitions:**
+
+```json
+{
+  "pinTypes": {
+    "output": {
+      "description": "Actively drives signal (push-pull)",
+      "canDrive": true,
+      "canReceive": false,
+      "examples": ["CMOS output", "TTL output"]
+    },
+    "input": {
+      "description": "Only receives signal",
+      "canDrive": false,
+      "canReceive": true,
+      "examples": ["Digital input", "Analog input"]
+    },
+    "bidirectional": {
+      "description": "Can drive or receive (tri-state)",
+      "canDrive": true,
+      "canReceive": true,
+      "examples": ["I2C SDA", "SPI MISO/MOSI"]
+    },
+    "open_drain": {
+      "description": "Can pull low, requires pull-up",
+      "canDrive": "pull_down_only",
+      "canReceive": true,
+      "requiresPullup": true,
+      "examples": ["I2C SCL/SDA", "Open collector"]
+    },
+    "passive": {
+      "description": "No active drive (resistor, capacitor)",
+      "canDrive": false,
+      "canReceive": false,
+      "examples": ["Resistor terminal", "Capacitor terminal"]
+    },
+    "power_input": {
+      "description": "Power supply input",
+      "canDrive": false,
+      "canReceive": true,
+      "criticalConnection": true
+    },
+    "power_output": {
+      "description": "Power supply output",
+      "canDrive": true,
+      "canReceive": false,
+      "criticalConnection": true
+    },
+    "ground": {
+      "description": "Ground reference",
+      "canDrive": false,
+      "canReceive": true,
+      "criticalConnection": true
+    }
+  }
+}
+```
+
+#### 4.10.2 Power and Ground Validation
+
+Validation rules for power distribution and grounding.
+
+**Schema:**
+
+```json
+{
+  "powerValidation": {
+    "rules": [
+      {
+        "id": "erc_power_001",
+        "name": "Power Net Voltage Mismatch",
+        "severity": "error",
+        "description": "Component power pin voltage does not match supply voltage",
+        "check": {
+          "componentPin": {
+            "type": "power_input",
+            "ratedVoltage": {"min": 4.5, "max": 5.5, "unit": "V"}
+          },
+          "connectedNet": {
+            "type": "power",
+            "voltage": {"nominal": 3.3, "unit": "V"}
+          },
+          "result": "error"
+        },
+        "semantic": {
+          "reasoning": "Applying wrong voltage can damage component",
+          "impact": "Component damage or malfunction"
+        }
+      },
+      {
+        "id": "erc_power_002",
+        "name": "Excessive Current Draw",
+        "severity": "warning",
+        "description": "Total load exceeds power supply capacity",
+        "check": {
+          "powerSupply": {
+            "component": "U1",
+            "pin": "VOUT",
+            "maxCurrent": {"value": 1.0, "unit": "A"}
+          },
+          "totalLoad": {
+            "calculated": 1.2,
+            "unit": "A"
+          },
+          "result": "warning"
+        },
+        "semantic": {
+          "reasoning": "Overloading power supply causes voltage drop or shutdown",
+          "impact": "System instability or shutdown"
+        }
+      },
+      {
+        "id": "erc_power_003",
+        "name": "Missing Decoupling Capacitor",
+        "severity": "warning",
+        "description": "IC power pin without nearby decoupling capacitor",
+        "check": {
+          "component": "U5",
+          "pinType": "power_input",
+          "decouplingCapacitor": {
+            "present": false,
+            "required": true,
+            "recommendedValue": {"value": 100, "unit": "nF"},
+            "maxDistance": {"value": 5, "unit": "mm"}
+          },
+          "result": "warning"
+        },
+        "semantic": {
+          "reasoning": "Decoupling caps stabilize power and reduce noise",
+          "impact": "Signal integrity issues, EMI problems"
+        }
+      },
+      {
+        "id": "erc_power_004",
+        "name": "Ground Not Connected",
+        "severity": "error",
+        "description": "Component ground pin not connected",
+        "check": {
+          "component": "U3",
+          "pinType": "ground",
+          "connected": false,
+          "result": "error"
+        },
+        "semantic": {
+          "reasoning": "Ground connection is essential for circuit operation",
+          "impact": "Component will not function"
+        }
+      },
+      {
+        "id": "erc_power_005",
+        "name": "Multiple Ground Nets",
+        "severity": "warning",
+        "description": "Design has multiple separate ground nets",
+        "check": {
+          "groundNets": ["GND", "AGND", "DGND"],
+          "isolated": true,
+          "result": "warning"
+        },
+        "semantic": {
+          "reasoning": "Intentional ground splits require careful design",
+          "impact": "Potential ground loops or reference issues",
+          "validUseCases": [
+            "Analog/digital ground separation with single-point connection",
+            "Isolated power supplies"
+          ]
+        }
+      },
+      {
+        "id": "erc_power_006",
+        "name": "Voltage Regulator Input Too Low",
+        "severity": "error",
+        "description": "Regulator input voltage below minimum dropout requirement",
+        "check": {
+          "regulator": "U2",
+          "inputVoltage": {"nominal": 3.5, "unit": "V"},
+          "outputVoltage": {"nominal": 3.3, "unit": "V"},
+          "dropout": {"min": 0.3, "unit": "V"},
+          "margin": 0.2,
+          "result": "error"
+        },
+        "semantic": {
+          "reasoning": "Insufficient headroom causes regulation failure",
+          "impact": "Output voltage will be below specification"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### 4.10.3 ERC Violation Reporting
+
+ERC-specific violation tracking and reporting with AI-friendly suggestions.
+
+**Schema:**
+
+```json
+{
+  "ercViolations": [
+    {
+      "id": "erc_violation_001",
+      "rule": "erc_rule_001",
+      "ruleName": "Output to Output Conflict",
+      "severity": "error",
+      "category": "pin_compatibility",
+      
+      "description": "Two output pins driving the same net",
+      
+      "location": {
+        "net": "net_data_bus_0",
+        "pins": [
+          {"component": "U1", "pin": "DOUT", "pinType": "output"},
+          {"component": "U2", "pin": "Q", "pinType": "output"}
+        ]
+      },
+      
+      "electricalDetails": {
+        "pin1": {
+          "component": "U1",
+          "pin": "DOUT",
+          "type": "output",
+          "driveStrength": "4mA",
+          "outputVoltage": {"high": 3.3, "low": 0, "unit": "V"}
+        },
+        "pin2": {
+          "component": "U2",
+          "pin": "Q",
+          "type": "output",
+          "driveStrength": "8mA",
+          "outputVoltage": {"high": 3.3, "low": 0, "unit": "V"}
+        },
+        "conflict": "Both pins actively drive - bus contention"
+      },
+      
+      "suggestions": [
+        {
+          "action": "Add tri-state control",
+          "description": "Convert one output to tri-state and add output-enable logic",
+          "effort": "medium",
+          "aiConfidence": 0.9
+        },
+        {
+          "action": "Add isolation resistor",
+          "description": "Add series resistor to one output (temporary workaround)",
+          "effort": "low",
+          "aiConfidence": 0.3,
+          "note": "Not recommended for production"
+        },
+        {
+          "action": "Use multiplexer",
+          "description": "Add 2:1 mux to select between outputs",
+          "effort": "high",
+          "aiConfidence": 0.8
+        }
+      ],
+      
+      "semantic": {
+        "impact": "Bus contention will cause excessive current draw and potential component damage",
+        "criticality": "high",
+        "mustFix": true,
+        "reasoning": "Multiple active drivers create undefined voltage levels and stress components",
+        "relatedViolations": []
+      },
+      
+      "aiMetadata": {
+        "patternType": "output_conflict",
+        "commonCause": "Copy-paste error or misunderstanding of bus architecture",
+        "learningNote": "Always verify only one driver is active on a net at any time"
+      }
+    },
+    {
+      "id": "erc_violation_002",
+      "rule": "erc_rule_002",
+      "ruleName": "Unconnected Input Pin",
+      "severity": "warning",
+      "category": "pin_connectivity",
+      
+      "description": "Digital input pin left floating",
+      
+      "location": {
+        "component": "U3",
+        "pin": "RESET_N",
+        "pinType": "input"
+      },
+      
+      "electricalDetails": {
+        "pin": {
+          "component": "U3",
+          "pin": "RESET_N",
+          "type": "input",
+          "function": "Active-low reset",
+          "internalPullup": false,
+          "schmittTrigger": false
+        },
+        "risk": "Undefined state - may float high or low"
+      },
+      
+      "suggestions": [
+        {
+          "action": "Add pull-up resistor",
+          "description": "Connect 10kΩ pull-up to VCC to keep inactive high",
+          "effort": "low",
+          "aiConfidence": 0.95
+        },
+        {
+          "action": "Connect to reset circuit",
+          "description": "Connect to power-on reset IC or RC circuit",
+          "effort": "medium",
+          "aiConfidence": 0.7
+        },
+        {
+          "action": "Tie directly to VCC",
+          "description": "If reset function not needed, tie directly to VCC",
+          "effort": "low",
+          "aiConfidence": 0.5,
+          "note": "Only if reset functionality is not required"
+        }
+      ],
+      
+      "semantic": {
+        "impact": "Unpredictable operation - device may reset randomly due to noise",
+        "criticality": "medium",
+        "mustFix": true,
+        "reasoning": "Floating inputs are susceptible to noise and ESD"
+      }
+    },
+    {
+      "id": "erc_violation_003",
+      "rule": "erc_power_002",
+      "ruleName": "Excessive Current Draw",
+      "severity": "warning",
+      "category": "power_budget",
+      
+      "description": "Total load current exceeds regulator capability",
+      
+      "location": {
+        "powerNet": "net_vcc_3v3",
+        "source": {"component": "U1", "pin": "VOUT"},
+        "loads": [
+          {"component": "U2", "current": 0.15},
+          {"component": "U3", "current": 0.35},
+          {"component": "U4", "current": 0.25},
+          {"component": "LED1", "current": 0.02},
+          {"component": "LED2", "current": 0.02}
+        ]
+      },
+      
+      "electricalDetails": {
+        "supplyCapacity": {"max": 0.5, "typical": 0.8, "unit": "A"},
+        "totalLoad": {"calculated": 0.79, "unit": "A"},
+        "margin": {"percentage": -56.7, "note": "Negative margin indicates overload"}
+      },
+      
+      "suggestions": [
+        {
+          "action": "Use higher current regulator",
+          "description": "Replace with 1A or 1.5A version of same regulator family",
+          "effort": "low",
+          "aiConfidence": 0.9,
+          "componentSuggestions": ["LM1117-1.5A", "AMS1117-1A"]
+        },
+        {
+          "action": "Add second regulator",
+          "description": "Split load between two regulators",
+          "effort": "high",
+          "aiConfidence": 0.6
+        },
+        {
+          "action": "Reduce LED current",
+          "description": "Increase LED series resistors to reduce current to 10mA each",
+          "effort": "low",
+          "aiConfidence": 0.7,
+          "savingsCurrent": 0.04
+        }
+      ],
+      
+      "semantic": {
+        "impact": "Regulator thermal shutdown or voltage droop under load",
+        "criticality": "high",
+        "mustFix": true,
+        "reasoning": "Exceeding current rating causes instability and potential damage"
+      }
+    }
+  ],
+  
+  "summary": {
+    "totalViolations": 3,
+    "errors": 1,
+    "warnings": 2,
+    "info": 0,
+    "categories": {
+      "pin_compatibility": 1,
+      "pin_connectivity": 1,
+      "power_budget": 1
+    },
+    "mustFixCount": 3,
+    "ercPassed": false
+  },
+  
+  "aiSummary": {
+    "criticalIssues": [
+      "Output-to-output conflict on net_data_bus_0 - requires immediate attention"
+    ],
+    "designQuality": "poor",
+    "estimatedFixEffort": "medium",
+    "commonPatterns": [
+      "Missing pull-up/pull-down resistors on inputs",
+      "Power budget not validated during component selection"
+    ]
+  }
+}
+```
+
+**ERC Severity Levels:**
+
+```json
+{
+  "severityLevels": {
+    "error": {
+      "description": "Fundamental electrical error that will cause malfunction or damage",
+      "color": "red",
+      "blockManufacturing": true,
+      "examples": [
+        "Output-to-output conflict",
+        "Power voltage mismatch",
+        "Ground not connected"
+      ]
+    },
+    "warning": {
+      "description": "Potential issue that may cause problems",
+      "color": "orange",
+      "blockManufacturing": false,
+      "requiresReview": true,
+      "examples": [
+        "Unconnected input",
+        "Current budget exceeded",
+        "Missing decoupling capacitor"
+      ]
+    },
+    "info": {
+      "description": "Design suggestion or best practice recommendation",
+      "color": "blue",
+      "blockManufacturing": false,
+      "requiresReview": false,
+      "examples": [
+        "Component value optimization available",
+        "Alternative component suggested"
+      ]
+    }
+  }
+}
+```
+
+**AI Benefits for ERC:**
+
+1. **Automated Validation**: AI can automatically check all electrical rules before manufacturing
+2. **Smart Suggestions**: AI provides context-aware fixes ranked by confidence and effort
+3. **Pattern Learning**: AI learns common ERC violations in specific design patterns
+4. **Preventative Design**: AI can suggest component connections that avoid violations
+5. **Impact Analysis**: AI explains the real-world consequences of each violation
+
+---
+
+## 6. API Specification
 
 The API is designed for AI agents to query, analyze, create, and modify designs.
 
@@ -3506,7 +4464,7 @@ mutation ModifyDesign {
 
 ### 6.1 JSON Format (Primary)
 
-**File Extension:** `.opcbdb` or `.opcbdb.json`
+**File Extension:** `.opcbdb`
 
 **Characteristics:**
 - Human-readable
@@ -3825,7 +4783,7 @@ if not result.complete:
 
 ---
 
-## 7. AI/ML Integration
+## 8. AI/ML Integration
 
 ### 7.1 Training Data Format
 
@@ -3951,7 +4909,7 @@ final_design = env.get_design()
 
 ---
 
-## 8. Reference Implementation
+## 9. Reference Implementation
 
 ### 8.1 Python Library: `pyopenpcbdb`
 
@@ -4007,7 +4965,7 @@ opcbdb-convert --from altium --input project.PrjPcb --output project.opcbdb
 
 ---
 
-## 9. Appendices
+## 10. Appendices
 
 ### 9.1 Complete Example: Simple LED Circuit
 
@@ -4174,7 +5132,7 @@ module
 
 ---
 
-## 10. Complex Design Support: Motherboard Example
+## 11. Complex Design Support: Motherboard Example
 
 ### 10.1 Motherboard Design Requirements
 
@@ -5007,7 +5965,7 @@ Motherboard
 
 ---
 
-## 11. Future Extensions (v2.0+)
+## 12. Future Extensions (v2.0+)
 
 - Multi-board systems
 - Flexible/rigid-flex PCB support
