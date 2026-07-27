@@ -1,0 +1,30 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "PCBLayout",
+  "library": "lib_1",
+  "cell": "usb_input",
+  "layoutType": "leaf",
+  "technologyRef": {
+    "file": "../../technology.db",
+    "id": "TECH_JLCPCB_6L_STD_1OZ",
+    "version": "0.1.0"
+  },
+  "placements": [
+    {
+      "refDesignator": "J1",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "unit": "mm"
+      }
+    },
+    {
+      "refDesignator": "F1",
+      "position": {
+        "x": 8,
+        "y": 0,
+        "unit": "mm"
+      }
+    }
+  ]
+}

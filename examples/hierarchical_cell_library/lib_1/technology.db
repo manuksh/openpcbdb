@@ -1,0 +1,321 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Technology",
+  "library": "lib_1",
+  "id": "TECH_JLCPCB_6L_STD_1OZ",
+  "name": "JLCPCB Standard 6-Layer 1 oz PCB Process",
+  "version": "0.1.0",
+  "fab": {
+    "name": "JLCPCB",
+    "processClass": "standard_6_layer",
+    "capabilityRevision": "2026-07",
+    "sourceRefs": [
+      {
+        "type": "manufacturer_capability_page",
+        "name": "JLCPCB 6-Layer PCB Capabilities",
+        "url": "https://jlcpcb.com/6-layer-pcb",
+        "retrievedAt": "2026-07-27"
+      },
+      {
+        "type": "manufacturer_capability_page",
+        "name": "JLCPCB PCB Manufacturing & Assembly Capabilities",
+        "url": "https://jlcpcb.com/capabilities/Capabilities%2C/",
+        "retrievedAt": "2026-07-27"
+      }
+    ]
+  },
+  "units": {
+    "length": "mm",
+    "copperWeight": "oz",
+    "temperature": "C"
+  },
+  "stackup": {
+    "layerCount": 6,
+    "boardThickness": {
+      "value": 1.6,
+      "unit": "mm"
+    },
+    "thicknessTolerance": {
+      "value": 10,
+      "unit": "%"
+    },
+    "controlledImpedanceAvailable": true,
+    "typicalLayerOrder": [
+      "signal",
+      "ground",
+      "power",
+      "signal",
+      "ground",
+      "signal"
+    ],
+    "layers": [
+      {
+        "id": "L1",
+        "name": "Top Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 1,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L2",
+        "name": "Ground Plane",
+        "type": "plane",
+        "planeType": "ground",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L3",
+        "name": "Power Plane",
+        "type": "plane",
+        "planeType": "power",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L4",
+        "name": "Inner Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L5",
+        "name": "Ground Plane",
+        "type": "plane",
+        "planeType": "ground",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L6",
+        "name": "Bottom Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 1,
+          "unit": "oz"
+        }
+      }
+    ],
+    "dielectric": {
+      "material": "FR4",
+      "thickness": {
+        "value": 1.6,
+        "unit": "mm"
+      }
+    }
+  },
+  "designRules": {
+    "traceWidth": {
+      "absoluteMinimum": {
+        "value": 0.09,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.12,
+        "unit": "mm"
+      },
+      "bgaFanoutMinimum": {
+        "value": 0.076,
+        "unit": "mm",
+        "risk": "engineering_review"
+      }
+    },
+    "traceSpacing": {
+      "absoluteMinimum": {
+        "value": 0.09,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.12,
+        "unit": "mm"
+      },
+      "bgaFanoutMinimum": {
+        "value": 0.076,
+        "unit": "mm",
+        "risk": "engineering_review"
+      }
+    },
+    "drill": {
+      "minimum": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "maximum": {
+        "value": 6.3,
+        "unit": "mm"
+      },
+      "tolerance": {
+        "upper": 0.13,
+        "lower": -0.08,
+        "unit": "mm"
+      }
+    },
+    "pthAnnularRing": {
+      "absoluteMinimum": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.20,
+        "unit": "mm"
+      }
+    },
+    "solderMaskExpansion": {
+      "mode": "one_to_one_supported",
+      "padOpeningExpansion": {
+        "value": 0,
+        "unit": "mm"
+      },
+      "minimumOpeningToTraceClearance": {
+        "value": 0.09,
+        "unit": "mm"
+      }
+    },
+    "solderMaskBridge": {
+      "greenRedYellowBluePurple": {
+        "value": 0.10,
+        "unit": "mm"
+      },
+      "blackWhite": {
+        "value": 0.13,
+        "unit": "mm"
+      }
+    },
+    "bga": {
+      "minimumPadDiameter": {
+        "value": 0.25,
+        "unit": "mm"
+      },
+      "minimumPadToTraceClearance": {
+        "value": 0.09,
+        "unit": "mm"
+      },
+      "viaInPadAvailable": true
+    }
+  },
+  "vias": [
+    {
+      "id": "VIA_MIN_0P25_0P15",
+      "type": "through",
+      "diameter": {
+        "value": 0.25,
+        "unit": "mm"
+      },
+      "drill": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "allowedLayers": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6"
+      ]
+    },
+    {
+      "id": "VIA_PREFERRED_0P45_0P20",
+      "type": "through",
+      "diameter": {
+        "value": 0.45,
+        "unit": "mm"
+      },
+      "drill": {
+        "value": 0.20,
+        "unit": "mm"
+      },
+      "allowedLayers": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6"
+      ]
+    },
+    {
+      "id": "VIA_IN_PAD_0P25_0P15",
+      "type": "via_in_pad",
+      "fill": "epoxy_or_copper_paste_filled_and_capped",
+      "diameter": {
+        "value": 0.25,
+        "unit": "mm"
+      },
+      "drill": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "diameterRange": {
+        "minimum": 0.15,
+        "maximum": 0.55,
+        "unit": "mm"
+      },
+      "allowedLayers": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6"
+      ]
+    }
+  ],
+  "surfaceFinish": {
+    "default": "ENIG",
+    "enigGoldThickness": {
+      "value": 2,
+      "unit": "uin"
+    }
+  },
+  "solderMask": {
+    "availableColors": [
+      "green",
+      "purple",
+      "red",
+      "yellow",
+      "blue",
+      "white",
+      "black"
+    ],
+    "defaultColor": "green"
+  },
+  "capabilities": {
+    "maximumBoardSize": {
+      "width": 660,
+      "height": 475,
+      "unit": "mm"
+    },
+    "boardThicknessOptions": [
+      0.8,
+      1.0,
+      1.2,
+      1.6,
+      2.0
+    ],
+    "viaInPad": true,
+    "edgePlating": true
+  },
+  "semantic": {
+    "purpose": "Define fabrication constraints used by all layout views in lib_1.",
+    "function": "Technology database for a JLCPCB-like standard six-layer PCB manufacturing process.",
+    "reasoning": "Layout validation must be checked against explicit fab capabilities. Preferred defaults are intentionally larger than absolute minimums so AI-generated layouts do not rely on process limits unless required."
+  }
+}

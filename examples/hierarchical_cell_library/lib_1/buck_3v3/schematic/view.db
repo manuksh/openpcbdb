@@ -1,0 +1,133 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Schematic",
+  "library": "lib_1",
+  "cell": "buck_3v3",
+  "externalPorts": [
+    {
+      "symbolPort": "vin",
+      "net": "VIN"
+    },
+    {
+      "symbolPort": "vout",
+      "net": "3V3"
+    },
+    {
+      "symbolPort": "en",
+      "net": "EN"
+    },
+    {
+      "symbolPort": "gnd",
+      "net": "GND"
+    }
+  ],
+  "components": [
+    {
+      "type": "ComponentInstance",
+      "refDesignator": "U1",
+      "componentDefinitionId": "BUCK_REGULATOR_ADJ",
+      "partNumber": {
+        "manufacturer": "Generic",
+        "mpn": "BUCK-ADJ-1A"
+      },
+      "userLibraryReferences": {
+        "symbol": "regulator:Buck_Adjustable",
+        "footprint": "package:SOT-23-6"
+      },
+      "semantic": {
+        "purpose": "Convert VIN to regulated 3.3V.",
+        "function": "Step-down switching regulator",
+        "reasoning": "A buck regulator is efficient for converting USB 5V to a 3.3V rail at the required current.",
+        "requirementRefs": [
+          "power.rail_3v3"
+        ]
+      }
+    },
+    {
+      "type": "ComponentInstance",
+      "refDesignator": "L1",
+      "componentDefinitionId": "INDUCTOR_4U7",
+      "partNumber": {
+        "manufacturer": "Generic",
+        "mpn": "L-4U7-1A"
+      },
+      "userLibraryReferences": {
+        "symbol": "passive:Inductor",
+        "footprint": "inductor:Inductor_4x4mm"
+      },
+      "semantic": {
+        "purpose": "Store energy for buck conversion.",
+        "function": "Power inductor",
+        "reasoning": "A 4.7 uH inductor is a common starting value for compact low-current buck regulators."
+      }
+    }
+  ],
+  "nets": [
+    {
+      "id": "NET_VIN",
+      "name": "VIN",
+      "connections": [
+        {
+          "externalPort": "vin"
+        },
+        {
+          "component": "U1",
+          "pin": "VIN"
+        }
+      ]
+    },
+    {
+      "id": "NET_SW",
+      "name": "SW",
+      "connections": [
+        {
+          "component": "U1",
+          "pin": "SW"
+        },
+        {
+          "component": "L1",
+          "pin": "1"
+        }
+      ]
+    },
+    {
+      "id": "NET_3V3",
+      "name": "3V3",
+      "connections": [
+        {
+          "component": "L1",
+          "pin": "2"
+        },
+        {
+          "externalPort": "vout"
+        }
+      ]
+    },
+    {
+      "id": "NET_EN",
+      "name": "EN",
+      "connections": [
+        {
+          "externalPort": "en"
+        },
+        {
+          "component": "U1",
+          "pin": "EN"
+        }
+      ]
+    },
+    {
+      "id": "NET_GND",
+      "name": "GND",
+      "connections": [
+        {
+          "externalPort": "gnd"
+        },
+        {
+          "component": "U1",
+          "pin": "GND"
+        }
+      ]
+    }
+  ]
+}

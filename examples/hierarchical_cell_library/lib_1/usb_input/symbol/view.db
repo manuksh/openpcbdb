@@ -1,0 +1,27 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "CellSymbol",
+  "library": "lib_1",
+  "cell": "usb_input",
+  "version": "0.1.0",
+  "ports": [
+    {
+      "id": "vbus_out",
+      "name": "VBUS_OUT",
+      "direction": "output",
+      "electricalType": "power",
+      "voltage": {
+        "nominal": 5.0,
+        "unit": "V"
+      },
+      "required": true
+    },
+    {
+      "id": "gnd",
+      "name": "GND",
+      "direction": "passive",
+      "electricalType": "ground",
+      "required": true
+    }
+  ]
+}

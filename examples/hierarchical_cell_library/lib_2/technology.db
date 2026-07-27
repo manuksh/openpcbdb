@@ -1,0 +1,193 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Technology",
+  "library": "lib_2",
+  "id": "TECH_JLCPCB_6L_STD_1OZ",
+  "name": "JLCPCB Standard 6-Layer 1 oz PCB Process",
+  "version": "0.1.0",
+  "fab": {
+    "name": "JLCPCB",
+    "processClass": "standard_6_layer",
+    "capabilityRevision": "2026-07",
+    "sourceRefs": [
+      {
+        "type": "manufacturer_capability_page",
+        "name": "JLCPCB 6-Layer PCB Capabilities",
+        "url": "https://jlcpcb.com/6-layer-pcb",
+        "retrievedAt": "2026-07-27"
+      },
+      {
+        "type": "manufacturer_capability_page",
+        "name": "JLCPCB PCB Manufacturing & Assembly Capabilities",
+        "url": "https://jlcpcb.com/capabilities/Capabilities%2C/",
+        "retrievedAt": "2026-07-27"
+      }
+    ]
+  },
+  "units": {
+    "length": "mm",
+    "copperWeight": "oz",
+    "temperature": "C"
+  },
+  "stackup": {
+    "layerCount": 6,
+    "boardThickness": {
+      "value": 1.6,
+      "unit": "mm"
+    },
+    "controlledImpedanceAvailable": true,
+    "typicalLayerOrder": [
+      "signal",
+      "ground",
+      "power",
+      "signal",
+      "ground",
+      "signal"
+    ],
+    "layers": [
+      {
+        "id": "L1",
+        "name": "Top Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 1,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L2",
+        "name": "Ground Plane",
+        "type": "plane",
+        "planeType": "ground",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L3",
+        "name": "Power Plane",
+        "type": "plane",
+        "planeType": "power",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L4",
+        "name": "Inner Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L5",
+        "name": "Ground Plane",
+        "type": "plane",
+        "planeType": "ground",
+        "material": "copper",
+        "copperWeight": {
+          "value": 0.5,
+          "unit": "oz"
+        }
+      },
+      {
+        "id": "L6",
+        "name": "Bottom Signal",
+        "type": "signal",
+        "material": "copper",
+        "copperWeight": {
+          "value": 1,
+          "unit": "oz"
+        }
+      }
+    ]
+  },
+  "designRules": {
+    "traceWidth": {
+      "absoluteMinimum": {
+        "value": 0.09,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.12,
+        "unit": "mm"
+      }
+    },
+    "traceSpacing": {
+      "absoluteMinimum": {
+        "value": 0.09,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.12,
+        "unit": "mm"
+      }
+    },
+    "drill": {
+      "minimum": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "maximum": {
+        "value": 6.3,
+        "unit": "mm"
+      }
+    },
+    "pthAnnularRing": {
+      "absoluteMinimum": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "preferredDefault": {
+        "value": 0.20,
+        "unit": "mm"
+      }
+    },
+    "solderMaskExpansion": {
+      "mode": "one_to_one_supported",
+      "padOpeningExpansion": {
+        "value": 0,
+        "unit": "mm"
+      },
+      "minimumOpeningToTraceClearance": {
+        "value": 0.09,
+        "unit": "mm"
+      }
+    }
+  },
+  "vias": [
+    {
+      "id": "VIA_MIN_0P25_0P15",
+      "type": "through",
+      "diameter": {
+        "value": 0.25,
+        "unit": "mm"
+      },
+      "drill": {
+        "value": 0.15,
+        "unit": "mm"
+      },
+      "allowedLayers": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6"
+      ]
+    }
+  ],
+  "semantic": {
+    "purpose": "Define fabrication constraints used by all layout views in lib_2.",
+    "function": "Technology database for a JLCPCB-like standard six-layer PCB manufacturing process.",
+    "reasoning": "lib_2 intentionally has its own technology database so libraries remain self-contained."
+  }
+}

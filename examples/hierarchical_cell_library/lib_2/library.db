@@ -1,0 +1,18 @@
+{
+  "openpcbdbVersion": "0.2.0",
+  "type": "Library",
+  "name": "lib_2",
+  "version": "0.1.0",
+  "technologyRef": {
+    "file": "technology.db",
+    "id": "TECH_JLCPCB_6L_STD_1OZ",
+    "version": "0.1.0"
+  },
+  "cells": [
+    {
+      "cell": "buck_3v3",
+      "path": "buck_3v3/cell.db",
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -490,7 +490,7 @@ OpenPCBDB v1.3.0 completes the specification with comprehensive physical impleme
 ---
 
 **Date**: 2025-11-11  
-**Author**: Manuk Shemsyan  
+**Author**: Alla Vardumyan  
 **Company**: Mintaka LLC, Armenia (www.mintaka-ai.com)  
 **License**: CC BY 4.0 (documentation) / Apache 2.0 (code)  
 **Status**: Draft, ready for implementation  

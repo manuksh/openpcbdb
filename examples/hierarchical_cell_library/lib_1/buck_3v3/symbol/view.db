@@ -1,0 +1,46 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "CellSymbol",
+  "library": "lib_1",
+  "cell": "buck_3v3",
+  "version": "0.1.0",
+  "ports": [
+    {
+      "id": "vin",
+      "name": "VIN",
+      "direction": "input",
+      "electricalType": "power",
+      "voltage": {
+        "nominal": 5.0,
+        "unit": "V"
+      },
+      "required": true
+    },
+    {
+      "id": "vout",
+      "name": "3V3",
+      "direction": "output",
+      "electricalType": "power",
+      "voltage": {
+        "nominal": 3.3,
+        "unit": "V"
+      },
+      "required": true
+    },
+    {
+      "id": "en",
+      "name": "EN",
+      "direction": "input",
+      "electricalType": "digital",
+      "logicLevel": "3v3",
+      "required": false
+    },
+    {
+      "id": "gnd",
+      "name": "GND",
+      "direction": "passive",
+      "electricalType": "ground",
+      "required": true
+    }
+  ]
+}

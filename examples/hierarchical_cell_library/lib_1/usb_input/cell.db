@@ -1,0 +1,51 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Cell",
+  "library": "lib_1",
+  "cell": "usb_input",
+  "id": "CELL_USB_INPUT",
+  "name": "USB Input",
+  "cellType": "leaf",
+  "version": "0.1.0",
+  "technologyRef": {
+    "file": "../technology.db",
+    "id": "TECH_JLCPCB_6L_STD_1OZ",
+    "version": "0.1.0"
+  },
+  "semantic": {
+    "purpose": "Accept USB 5V input and expose protected VBUS.",
+    "function": "USB power entry leaf cell",
+    "reasoning": "Connector and input protection are kept inside one reusable cell."
+  },
+  "requirementsRef": {
+    "file": "../../requirements.db",
+    "ids": [
+      "power.input_usb_5v",
+      "power.common_ground"
+    ],
+    "version": "0.1.0"
+  },
+  "views": {
+    "symbol": {
+      "path": "symbol/view.db",
+      "type": "CellSymbol",
+      "version": "0.1.0"
+    },
+    "schematic": {
+      "path": "schematic/view.db",
+      "type": "Schematic",
+      "version": "0.1.0"
+    },
+    "layout": {
+      "path": "layout/view.db",
+      "type": "PCBLayout",
+      "version": "0.1.0",
+      "optional": true
+    }
+  },
+  "validation": {
+    "status": "unknown",
+    "lastValidatedAt": null,
+    "reports": []
+  }
+}

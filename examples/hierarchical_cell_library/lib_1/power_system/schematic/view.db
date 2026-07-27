@@ -1,0 +1,108 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Schematic",
+  "library": "lib_1",
+  "cell": "power_system",
+  "externalPorts": [
+    {
+      "symbolPort": "usb_5v",
+      "net": "USB_5V"
+    },
+    {
+      "symbolPort": "rail_3v3",
+      "net": "3V3"
+    },
+    {
+      "symbolPort": "gnd",
+      "net": "GND"
+    }
+  ],
+  "instances": [
+    {
+      "id": "X_USB_INPUT",
+      "type": "CellInstance",
+      "library": "lib_1",
+      "cell": "usb_input",
+      "cellRef": "../../usb_input/cell.db",
+      "viewBinding": {
+        "connectivity": "../../usb_input/symbol/view.db",
+        "implementation": "../../usb_input/schematic/view.db",
+        "physical": "../../usb_input/layout/view.db"
+      },
+      "semantic": {
+        "purpose": "Provide the protected USB VBUS input.",
+        "function": "Instantiates the USB input leaf cell.",
+        "reasoning": "The USB input function is isolated so connector and protection choices can be validated separately."
+      }
+    },
+    {
+      "id": "X_BUCK_3V3",
+      "type": "CellInstance",
+      "library": "lib_1",
+      "cell": "buck_3v3",
+      "cellRef": "../../buck_3v3/cell.db",
+      "viewBinding": {
+        "connectivity": "../../buck_3v3/symbol/view.db",
+        "implementation": "../../buck_3v3/schematic/view.db",
+        "physical": "../../buck_3v3/layout/view.db"
+      },
+      "semantic": {
+        "purpose": "Generate the 3.3V rail.",
+        "function": "Instantiates the 5V to 3.3V buck regulator leaf cell.",
+        "reasoning": "The regulator is a reusable power cell with a clear public interface."
+      }
+    }
+  ],
+  "nets": [
+    {
+      "id": "NET_USB_5V",
+      "name": "USB_5V",
+      "connections": [
+        {
+          "instance": "self",
+          "port": "usb_5v"
+        },
+        {
+          "instance": "X_USB_INPUT",
+          "port": "vbus_out"
+        },
+        {
+          "instance": "X_BUCK_3V3",
+          "port": "vin"
+        }
+      ]
+    },
+    {
+      "id": "NET_3V3",
+      "name": "3V3",
+      "connections": [
+        {
+          "instance": "X_BUCK_3V3",
+          "port": "vout"
+        },
+        {
+          "instance": "self",
+          "port": "rail_3v3"
+        }
+      ]
+    },
+    {
+      "id": "NET_GND",
+      "name": "GND",
+      "connections": [
+        {
+          "instance": "self",
+          "port": "gnd"
+        },
+        {
+          "instance": "X_USB_INPUT",
+          "port": "gnd"
+        },
+        {
+          "instance": "X_BUCK_3V3",
+          "port": "gnd"
+        }
+      ]
+    }
+  ]
+}

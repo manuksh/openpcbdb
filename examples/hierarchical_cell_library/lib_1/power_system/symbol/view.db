@@ -1,0 +1,43 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "CellSymbol",
+  "library": "lib_1",
+  "cell": "power_system",
+  "version": "0.1.0",
+  "semantic": {
+    "purpose": "Expose the public electrical interface of the power system cell.",
+    "function": "Defines USB 5V input, regulated 3.3V output, and common ground ports.",
+    "reasoning": "Parent cells must connect only through public symbol ports."
+  },
+  "ports": [
+    {
+      "id": "usb_5v",
+      "name": "USB_5V",
+      "direction": "input",
+      "electricalType": "power",
+      "voltage": {
+        "nominal": 5.0,
+        "unit": "V"
+      },
+      "required": true
+    },
+    {
+      "id": "rail_3v3",
+      "name": "3V3",
+      "direction": "output",
+      "electricalType": "power",
+      "voltage": {
+        "nominal": 3.3,
+        "unit": "V"
+      },
+      "required": true
+    },
+    {
+      "id": "gnd",
+      "name": "GND",
+      "direction": "passive",
+      "electricalType": "ground",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Requirements",
+  "id": "REQ_POWER_SYSTEM_0001",
+  "version": "0.1.0",
+  "name": "Power System Requirements",
+  "requirements": [
+    {
+      "id": "power.input_usb_5v",
+      "type": "electrical",
+      "description": "Accept 5V input from USB VBUS.",
+      "limits": {
+        "voltage": {
+          "nominal": 5.0,
+          "unit": "V"
+        }
+      }
+    },
+    {
+      "id": "power.rail_3v3",
+      "type": "electrical",
+      "description": "Generate regulated 3.3V rail for downstream logic.",
+      "limits": {
+        "voltage": {
+          "nominal": 3.3,
+          "tolerance": 0.05,
+          "unit": "V"
+        },
+        "current": {
+          "minimum": 0.5,
+          "unit": "A"
+        }
+      }
+    },
+    {
+      "id": "power.common_ground",
+      "type": "electrical",
+      "description": "Provide a shared ground reference for input and regulated output."
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "openpcbdbVersion": "0.2.0",
+  "type": "Project",
+  "id": "hierarchical_cell_library_example",
+  "name": "Hierarchical Cell Library Example",
+  "version": "0.1.0",
+  "top": {
+    "library": "lib_1",
+    "cell": "power_system",
+    "view": "schematic",
+    "path": "lib_1/power_system/schematic/view.db"
+  },
+  "requirementsRef": {
+    "file": "requirements.db",
+    "id": "REQ_POWER_SYSTEM_0001",
+    "version": "0.1.0"
+  },
+  "libraries": [
+    {
+      "name": "lib_1",
+      "path": "lib_1/library.db",
+      "technology": {
+        "id": "TECH_JLCPCB_6L_STD_1OZ",
+        "path": "lib_1/technology.db",
+        "version": "0.1.0"
+      },
+      "cells": [
+        {
+          "cell": "power_system",
+          "path": "lib_1/power_system/cell.db",
+          "version": "0.1.0",
+          "views": {
+            "symbol": {
+              "path": "lib_1/power_system/symbol/view.db",
+              "type": "CellSymbol",
+              "version": "0.1.0"
+            },
+            "schematic": {
+              "path": "lib_1/power_system/schematic/view.db",
+              "type": "Schematic",
+              "version": "0.1.0"
+            },
+            "layout": {
+              "path": "lib_1/power_system/layout/view.db",
+              "type": "PCBLayout",
+              "version": "0.1.0"
+            }
+          }
+        },
+        {
+          "cell": "usb_input",
+          "path": "lib_1/usb_input/cell.db",
+          "version": "0.1.0",
+          "views": {
+            "symbol": {
+              "path": "lib_1/usb_input/symbol/view.db",
+              "type": "CellSymbol",
+              "version": "0.1.0"
+            },
+            "schematic": {
+              "path": "lib_1/usb_input/schematic/view.db",
+              "type": "Schematic",
+              "version": "0.1.0"
+            },
+            "layout": {
+              "path": "lib_1/usb_input/layout/view.db",
+              "type": "PCBLayout",
+              "version": "0.1.0"
+            }
+          }
+        },
+        {
+          "cell": "buck_3v3",
+          "path": "lib_1/buck_3v3/cell.db",
+          "version": "0.1.0",
+          "views": {
+            "symbol": {
+              "path": "lib_1/buck_3v3/symbol/view.db",
+              "type": "CellSymbol",
+              "version": "0.1.0"
+            },
+            "schematic": {
+              "path": "lib_1/buck_3v3/schematic/view.db",
+              "type": "Schematic",
+              "version": "0.1.0"
+            },
+            "layout": {
+              "path": "lib_1/buck_3v3/layout/view.db",
+              "type": "PCBLayout",
+              "version": "0.1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "lib_2",
+      "path": "lib_2/library.db",
+      "technology": {
+        "id": "TECH_JLCPCB_6L_STD_1OZ",
+        "path": "lib_2/technology.db",
+        "version": "0.1.0"
+      },
+      "cells": [
+        {
+          "cell": "buck_3v3",
+          "path": "lib_2/buck_3v3/cell.db",
+          "version": "0.1.0",
+          "views": {
+            "symbol": {
+              "path": "lib_2/buck_3v3/symbol/view.db",
+              "type": "CellSymbol",
+              "version": "0.1.0"
+            },
+            "schematic": {
+              "path": "lib_2/buck_3v3/schematic/view.db",
+              "type": "Schematic",
+              "version": "0.1.0"
+            },
+            "layout": {
+              "path": "lib_2/buck_3v3/layout/view.db",
+              "type": "PCBLayout",
+              "version": "0.1.0"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

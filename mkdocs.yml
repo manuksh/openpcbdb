@@ -1,0 +1,48 @@
+site_name: OpenPCBDB Python API
+site_description: EDA-style Python API for OpenPCBDB library/cell/view databases
+repo_url: https://github.com/openpcbdb/openpcbdb
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - API Usage:
+      - api/index.md
+      - Design Database: api/design.md
+      - Library: api/library.md
+      - Cell: api/cell.md
+      - Views: api/views.md
+      - Translators: api/translators.md
+      - Checks: api/checks.md
+      - IO Storage: api/io.md
+  - Examples:
+      - examples/index.md
+      - Open Design: examples/openDesign.md
+      - Read AI Context: examples/readContext.md
+      - Create Cell and Views: examples/createCell.md
+      - Edit Views: examples/editViews.md
+      - Add Tool Views: examples/toolViews.md
+      - Run Checks: examples/runChecks.md
+  - Development:
+      - Documentation Style: development/documentationStyle.md
+      - AI Agent Pack: development/aiAgentPack.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+            separate_signature: true
+            members_order: source
+            filters:
+              - "!^_"

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openpcbdb"
+version = "0.1.0"
+description = "Python API for OpenPCBDB AI-native EDA databases"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Mintaka LLC" }
+]
+
+[project.scripts]
+openpcbdb-validate = "openpcbdb.cli:main"
+
+[project.optional-dependencies]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.25",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["openpcbdb*"]

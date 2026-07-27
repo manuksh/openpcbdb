@@ -1,0 +1,51 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Cell",
+  "library": "lib_1",
+  "cell": "buck_3v3",
+  "id": "CELL_BUCK_3V3",
+  "name": "5V to 3.3V Buck Regulator",
+  "cellType": "leaf",
+  "version": "0.1.0",
+  "technologyRef": {
+    "file": "../technology.db",
+    "id": "TECH_JLCPCB_6L_STD_1OZ",
+    "version": "0.1.0"
+  },
+  "semantic": {
+    "purpose": "Convert 5V input into a regulated 3.3V rail.",
+    "function": "Switching buck regulator leaf cell",
+    "reasoning": "The regulator is isolated as a reusable cell with explicit input, output, enable, and ground ports."
+  },
+  "requirementsRef": {
+    "file": "../../requirements.db",
+    "ids": [
+      "power.rail_3v3",
+      "power.common_ground"
+    ],
+    "version": "0.1.0"
+  },
+  "views": {
+    "symbol": {
+      "path": "symbol/view.db",
+      "type": "CellSymbol",
+      "version": "0.1.0"
+    },
+    "schematic": {
+      "path": "schematic/view.db",
+      "type": "Schematic",
+      "version": "0.1.0"
+    },
+    "layout": {
+      "path": "layout/view.db",
+      "type": "PCBLayout",
+      "version": "0.1.0",
+      "optional": true
+    }
+  },
+  "validation": {
+    "status": "unknown",
+    "lastValidatedAt": null,
+    "reports": []
+  }
+}

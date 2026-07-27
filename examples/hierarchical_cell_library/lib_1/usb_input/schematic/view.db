@@ -1,0 +1,102 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "Schematic",
+  "library": "lib_1",
+  "cell": "usb_input",
+  "externalPorts": [
+    {
+      "symbolPort": "vbus_out",
+      "net": "VBUS_OUT"
+    },
+    {
+      "symbolPort": "gnd",
+      "net": "GND"
+    }
+  ],
+  "components": [
+    {
+      "type": "ComponentInstance",
+      "refDesignator": "J1",
+      "componentDefinitionId": "USB_C_RECEPTACLE_16P",
+      "partNumber": {
+        "manufacturer": "Generic",
+        "mpn": "USB-C-16P"
+      },
+      "userLibraryReferences": {
+        "symbol": "connector:USB_C_Receptacle_USB2",
+        "footprint": "connector:USB_C_Receptacle_16P"
+      },
+      "semantic": {
+        "purpose": "Receive 5V input from a USB-C cable.",
+        "function": "USB power connector",
+        "reasoning": "A USB-C receptacle provides a standard 5V power-entry interface.",
+        "requirementRefs": [
+          "power.input_usb_5v"
+        ]
+      }
+    },
+    {
+      "type": "ComponentInstance",
+      "refDesignator": "F1",
+      "componentDefinitionId": "PTC_FUSE_500MA",
+      "partNumber": {
+        "manufacturer": "Generic",
+        "mpn": "PTC-500MA"
+      },
+      "userLibraryReferences": {
+        "symbol": "protection:PTC_Fuse",
+        "footprint": "fuse:Fuse_1206"
+      },
+      "semantic": {
+        "purpose": "Limit fault current from USB VBUS.",
+        "function": "Resettable input protection",
+        "reasoning": "A PTC fuse protects the board and upstream port from overcurrent faults.",
+        "requirementRefs": [
+          "power.input_usb_5v"
+        ]
+      }
+    }
+  ],
+  "nets": [
+    {
+      "id": "NET_USB_VBUS",
+      "name": "USB_VBUS",
+      "connections": [
+        {
+          "component": "J1",
+          "pin": "VBUS"
+        },
+        {
+          "component": "F1",
+          "pin": "1"
+        }
+      ]
+    },
+    {
+      "id": "NET_VBUS_OUT",
+      "name": "VBUS_OUT",
+      "connections": [
+        {
+          "component": "F1",
+          "pin": "2"
+        },
+        {
+          "externalPort": "vbus_out"
+        }
+      ]
+    },
+    {
+      "id": "NET_GND",
+      "name": "GND",
+      "connections": [
+        {
+          "component": "J1",
+          "pin": "GND"
+        },
+        {
+          "externalPort": "gnd"
+        }
+      ]
+    }
+  ]
+}

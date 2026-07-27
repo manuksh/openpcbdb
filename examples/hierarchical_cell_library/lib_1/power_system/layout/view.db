@@ -1,0 +1,30 @@
+{
+  "openpcbdbVersion": "0.1.0",
+  "type": "PCBLayout",
+  "library": "lib_1",
+  "cell": "power_system",
+  "layoutType": "floorplan",
+  "technologyRef": {
+    "file": "../../technology.db",
+    "id": "TECH_JLCPCB_6L_STD_1OZ",
+    "version": "0.1.0"
+  },
+  "placements": [
+    {
+      "instance": "X_USB_INPUT",
+      "position": {
+        "x": 5,
+        "y": 12.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "instance": "X_BUCK_3V3",
+      "position": {
+        "x": 22,
+        "y": 12.5,
+        "unit": "mm"
+      }
+    }
+  ]
+}

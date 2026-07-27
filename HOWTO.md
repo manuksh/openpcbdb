@@ -202,7 +202,7 @@ Example: "Create a BOM for power_supply.opcbdb"
 - Full Specification: `specification/specification.md` (4199 lines)
 - Version: 1.2.0
 - Date: 2025-11-11
-- Author: Manuk Shemsyan
+- Author: Alla Vardumyan
 - Company: Mintaka LLC, Armenia (www.mintaka-ai.com)
 
 ## 🔑 Key Features Available
